@@ -4,12 +4,12 @@
 
 **To install in all environments (useful for generating seed data in dev/prod):**
 
-In `mix.exs`, add the Factory dependency:
+In `mix.exs`, add the factori dependency:
 
 ```elixir
 def deps do
   [
-    {:factori, "~> 0.0.1"},
+    {:factori, "~> 0.0.2"},
   ]
 end
 ```
