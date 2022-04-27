@@ -1,24 +1,22 @@
 defmodule Factori.Storage do
-  @schemas_table_name :schemas
-
   alias :ets, as: ETS
 
-  def init do
-    if ETS.whereis(@schemas_table_name) !== :undefined do
-      ETS.delete(@schemas_table_name)
+  def init(name) do
+    if ETS.whereis(name) !== :undefined do
+      ETS.delete(name)
     end
 
-    ETS.new(@schemas_table_name, [:named_table])
+    ETS.new(name, [:named_table])
 
     :ok
   end
 
-  def insert_schema_columns({schema, columns}) do
-    ETS.insert(@schemas_table_name, {schema, columns})
+  def insert_schema_columns({schema, columns}, name) do
+    ETS.insert(name, {schema, columns})
   end
 
-  def get_schema_columns(schema) do
-    case ETS.lookup(@schemas_table_name, schema) do
+  def get_schema_columns(schema, name) do
+    case ETS.lookup(name, schema) do
       [{_, columns}] -> columns
       _ -> []
     end

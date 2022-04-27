@@ -33,44 +33,37 @@ defmodule Factori do
 
   defmacro __using__(opts) do
     quote do
+      @storage_name __ENV__.module
       @repo unquote(opts[:repo])
-      @mappings List.wrap(unquote(opts[:mappings]))
-      @variants List.wrap(unquote(opts[:variants]))
 
       def bootstrap do
-        Bootstrap.init()
-        Bootstrap.bootstrap(@repo)
-      end
-
-      def insert_list(count, table_name, attrs \\ []) do
-        ensure_valid_table_name!(table_name)
-
-        attrs = for _ <- 1..count, do: Attributes.map(__MODULE__, @mappings, table_name, attrs)
-
-        insert_all(table_name, attrs)
+        Bootstrap.init(@storage_name)
+        Bootstrap.bootstrap(@repo, @storage_name)
       end
 
       def insert(table_name, struct_module \\ nil, attrs \\ nil, source_column \\ nil)
 
       def insert(variant, attrs, source_column, _) when is_atom(variant) do
-        case List.keyfind(@variants, variant, 0) do
+        case List.keyfind(List.wrap(unquote(opts[:variants])), variant, 0) do
           {_, table_name} when is_binary(table_name) ->
             insert(table_name, attrs, source_column)
 
           {_, table_name, variant_attrs} when is_binary(table_name) and is_list(variant_attrs) ->
-            attrs = Keyword.merge(attrs || [], variant_attrs)
+            attrs = Keyword.merge(variant_attrs, attrs || [])
             insert(table_name, attrs, source_column)
 
           {_, table_name, struct_module} when is_binary(table_name) and is_atom(struct_module) ->
             insert(table_name, struct_module, attrs, source_column)
 
-          {_, table_name, struct_module, variant_attrs} when is_binary(table_name) and is_atom(struct_module) and is_list(variant_attrs) ->
-            attrs = Keyword.merge(attrs || [], variant_attrs)
+          {_, table_name, struct_module, variant_attrs}
+          when is_binary(table_name) and is_atom(struct_module) and is_list(variant_attrs) ->
+            attrs = Keyword.merge(variant_attrs, attrs || [])
             insert(table_name, struct_module, attrs, source_column)
 
-          {_, struct_module, variant_attrs} when is_atom(struct_module) and is_list(variant_attrs) ->
+          {_, struct_module, variant_attrs}
+          when is_atom(struct_module) and is_list(variant_attrs) ->
             if function_exported?(struct_module, :__schema__, 1) do
-              attrs = Keyword.merge(attrs || [], variant_attrs)
+              attrs = Keyword.merge(variant_attrs, attrs || [])
               table_name = struct_module.__schema__(:source)
               insert(table_name, struct_module, attrs, source_column)
             else
@@ -86,30 +79,48 @@ defmodule Factori do
             end
 
           _ ->
-            raise UndefinedVariantError, name: variant, variants: @variants
+            raise UndefinedVariantError,
+              name: variant,
+              variants: List.wrap(unquote(opts[:variants]))
         end
       end
 
       def insert(table_name, struct_module, attrs, source_column)
           when is_atom(struct_module) and not is_nil(struct_module) do
-        data = insert(table_name, attrs, source_column)
-        struct(struct_module, data)
+        {data, db_attrs, struct_attrs} = do_insert(table_name, attrs, source_column)
+        struct = struct(struct_module, data)
+
+        Map.merge(struct, Enum.into(struct_attrs, %{}))
       end
 
       def insert(table_name, attrs, source_column, _) do
+        {data, db_attrs, struct_attrs} = do_insert(table_name, attrs, source_column)
+        Map.merge(data, Enum.into(struct_attrs, %{}))
+      end
+
+      defp do_insert(table_name, attrs, source_column) do
         attrs = attrs || []
         ensure_valid_table_name!(table_name)
 
-        attrs = Attributes.map(__MODULE__, @mappings, table_name, attrs, source_column)
+        {db_attrs, struct_attrs} =
+          Attributes.map(
+            __MODULE__,
+            List.wrap(unquote(opts[:mappings])),
+            table_name,
+            attrs,
+            @storage_name,
+            source_column
+          )
 
-        hd(insert_all(table_name, [attrs]))
+        data = hd(insert_all(table_name, [db_attrs]))
+        {data, db_attrs, struct_attrs}
       end
 
       def match(_), do: :not_found
       defoverridable match: 1
 
       defp ensure_valid_table_name!(table_name) do
-        case Storage.get_schema_columns(table_name) do
+        case Storage.get_schema_columns(table_name, @storage_name) do
           [] -> raise("#{inspect(table_name)} table does not exists in your database.")
           _ -> :ok
         end
@@ -123,7 +134,7 @@ defmodule Factori do
         |> Enum.flat_map(fn attrs ->
           case @repo.insert_all(table_name, attrs, returning: Keyword.keys(first_attrs)) do
             {_, records} ->
-              columns = Storage.get_schema_columns(table_name)
+              columns = Storage.get_schema_columns(table_name, @storage_name)
               Enum.map(records, &load_record_values(&1, columns))
 
             _ ->

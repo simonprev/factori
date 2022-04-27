@@ -26,9 +26,10 @@ defmodule Factori.Mixfile do
     [
       {:ex_doc, "~> 0.14", only: :dev},
       {:earmark, ">= 0.0.0", only: :dev},
-      {:faker, "~> 0.16", only: :test},
+      {:faker, "~> 0.16"},
       {:ecto, "~> 3.0"},
       {:ecto_sql, "~> 3.0"},
+      {:jason, "~> 1.0", only: :test},
       {:postgrex, "~> 0.14", only: :test}
     ]
   end

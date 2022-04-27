@@ -47,13 +47,17 @@ defmodule Factori.Attributes do
     end
   end
 
-  def map(factory, mappings, table_name, attrs, source_column \\ nil) do
+  def map(factory, mappings, table_name, attrs, storage_name, source_column \\ nil) do
     columns =
       table_name
-      |> Storage.get_schema_columns()
+      |> Storage.get_schema_columns(storage_name)
       |> Enum.sort_by(&((&1.reference && 1) || 0))
 
-    Enum.reduce(columns, attrs, fn column, attrs ->
+    {db_attrs, struct_attrs} = Enum.split_with(attrs, fn attr ->
+      Enum.find(columns, & &1.name === attr)
+    end)
+
+    db_attrs = Enum.reduce(columns, db_attrs, fn column, attrs ->
       value =
         if column.reference do
           fetch_reference_value(&factory.insert/3, columns, attrs, column, source_column)
@@ -80,6 +84,18 @@ defmodule Factori.Attributes do
       value = FactoryEcto.dump_value(value, column.ecto_type)
       [{column.name, value} | attrs]
     end)
+
+    {db_attrs, struct_attrs}
+  end
+
+  defp find_mapping_value(func, column) when is_function(func) do
+    if column.options.null do
+      if nil_probability?(), do: func.(column), else: nil
+    else
+      func.(column)
+    end
+  rescue
+    FunctionClauseError -> :not_found
   end
 
   defp find_mapping_value(module, column) do

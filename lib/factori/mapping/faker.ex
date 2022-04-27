@@ -9,13 +9,14 @@ defmodule Factori.Mapping.Faker do
   }
 
   def match(%{type: "uuid"}), do: Ecto.UUID.generate()
-  def match(%{type: "json"}), do: "{}"
-  def match(%{type: "jsonb"}), do: "{}"
+  def match(%{type: "json"}), do: %{}
+  def match(%{type: "jsonb"}), do: %{}
   def match(%{type: "int2"}), do: Enum.random(@ranges.smallint)
   def match(%{type: "int4"}), do: Enum.random(@ranges.integer)
   def match(%{type: "int8"}), do: Enum.random(@ranges.bigserial)
   def match(%{type: "float4"}), do: Enum.random(@ranges.serial)
   def match(%{type: "float8"}), do: Enum.random(@ranges.bigserial)
+  def match(%{type: "numeric"}), do: Enum.random(@ranges.bigserial)
   def match(%{type: "text"}), do: Faker.Lorem.paragraph(5)
   def match(%{type: "bool"}), do: Enum.random([true, false])
   def match(%{type: "time"}), do: time()
@@ -23,6 +24,7 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "timestamp"}), do: timestamp()
   def match(%{type: "timestampz"}), do: timestamp()
   def match(%{type: "char", options: options}), do: varchar(options)
+  def match(%{type: "bytea", options: options}), do: varchar(options)
 
   def match(%{type: "varchar", name: name, options: options}) do
     if String.ends_with?(to_string(name), "_id") do

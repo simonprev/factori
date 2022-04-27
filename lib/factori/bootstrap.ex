@@ -44,16 +44,16 @@ defmodule Factori.Bootstrap do
     INNER JOIN information_schema.key_column_usage ON referential_constraints. "constraint_name" = key_column_usage. "constraint_name"
   """
 
-  def init, do: Factori.Storage.init()
+  def init(name), do: Factori.Storage.init(name)
 
-  def bootstrap(repo) do
+  def bootstrap(repo, name) do
     repo
     |> fetch_column_definitions!()
-    |> persist_column_definitions()
+    |> persist_column_definitions(name)
   end
 
-  defp persist_column_definitions(columns) do
-    Enum.each(columns, &Factori.Storage.insert_schema_columns/1)
+  defp persist_column_definitions(columns, name) do
+    Enum.each(columns, &Factori.Storage.insert_schema_columns(&1, name))
   end
 
   defp fetch_column_definitions!(repo) do
