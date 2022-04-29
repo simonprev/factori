@@ -34,6 +34,8 @@ defmodule Factori.Mapping.Faker do
     end
   end
 
+  def transform(_, value), do: value
+
   defp readable_varchar(options) do
     max_size = options[:size] || 255
 

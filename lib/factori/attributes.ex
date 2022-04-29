@@ -53,52 +53,84 @@ defmodule Factori.Attributes do
       |> Storage.get_schema_columns(storage_name)
       |> Enum.sort_by(&((&1.reference && 1) || 0))
 
-    {db_attrs, struct_attrs} = Enum.split_with(attrs, fn attr ->
-      Enum.find(columns, & &1.name === attr)
-    end)
+    {db_attrs, struct_attrs} =
+      Enum.split_with(attrs, fn attr ->
+        Enum.find(columns, &(&1.name === attr))
+      end)
 
-    db_attrs = Enum.reduce(columns, db_attrs, fn column, attrs ->
-      value =
-        if column.reference do
-          fetch_reference_value(&factory.insert/3, columns, attrs, column, source_column)
-        else
-          Keyword.get_lazy(attrs, column.name, fn ->
-            value_mapping =
-              Enum.find_value([factory | mappings], fn module ->
-                value = find_mapping_value(module, column)
-                value !== :not_found && {:ok, value}
-              end)
+    db_attrs =
+      Enum.reduce(columns, db_attrs, fn column, attrs ->
+        value =
+          if column.reference do
+            fetch_reference_value(&factory.insert/3, columns, attrs, column, source_column)
+          else
+            Keyword.get_lazy(attrs, column.name, fn ->
+              value_mapping =
+                Enum.find_value(mappings, fn mapping ->
+                  value = find_mapping_value(mapping, column)
+                  value !== :not_found && {:ok, value}
+                end)
 
-            case value_mapping do
-              {:ok, value} ->
-                value
+              case value_mapping do
+                {:ok, value} ->
+                  Enum.reduce(mappings, value, fn mapping, acc ->
+                    find_transformed_value(mapping, column, acc)
+                  end)
 
-              _ ->
-                Logger.warn("Can't find a mapping for #{inspect(column)}")
+                _ ->
+                  Logger.warn("Can't find a mapping for #{inspect(column)}")
 
-                nil
-            end
-          end)
-        end
+                  nil
+              end
+            end)
+          end
 
-      value = FactoryEcto.dump_value(value, column.ecto_type)
-      [{column.name, value} | attrs]
-    end)
+        value = FactoryEcto.dump_value(value, column.ecto_type)
+        [{column.name, value} | attrs]
+      end)
 
     {db_attrs, struct_attrs}
   end
 
-  defp find_mapping_value(func, column) when is_function(func) do
+  defp find_transformed_value(_mapping, _column, nil), do: nil
+
+  defp find_transformed_value(mapping, column, value) when is_list(mapping) do
+    if mapping[:transform],
+      do: mapping[:transform].(column, value),
+      else: value
+  end
+
+  defp find_transformed_value(mapping, _column, value) when is_function(mapping) do
+    value
+  end
+
+  defp find_transformed_value(mapping, column, value) when is_atom(mapping) do
+    if function_exported?(mapping, :transform, 2),
+      do: mapping.transform(column, value),
+      else: value
+  end
+
+  defp find_mapping_value(mapping, column) when is_list(mapping) do
     if column.options.null do
-      if nil_probability?(), do: func.(column), else: nil
+      if nil_probability?(), do: mapping[:match].(column), else: nil
     else
-      func.(column)
+      mapping[:match].(column)
     end
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp find_mapping_value(module, column) do
+  defp find_mapping_value(mapping, column) when is_function(mapping) do
+    if column.options.null do
+      if nil_probability?(), do: mapping.(column), else: nil
+    else
+      mapping.(column)
+    end
+  rescue
+    FunctionClauseError -> :not_found
+  end
+
+  defp find_mapping_value(module, column) when is_atom(module) do
     if column.options.null do
       if nil_probability?(), do: module.match(column), else: nil
     else

@@ -58,6 +58,51 @@ test "insert user with overrides" do
 end
 ```
 
+### Mappings
+
+Mappings are modules or functions used to map data to columns. `factori` ships with a Faker integration that insert valid data from the type of the column. You can add your own mapper before Faker to override the data mapping:
+
+```elixir
+defmodule MyAppTest.MappingCustom do
+  @behaviour Factori.Mapping
+  def match(%{name: :name}), do: "bar"
+end
+
+defmodule MyAppTest.Factory do
+  use Factori,
+    repo: MyApp.Repo,
+    mappings: [fn %{name: :name} -> "foo" end, MappingCustom, Factori.Mapping.Faker]
+end
+
+test "mappings" do
+  user = Factory.insert("users")
+  assert user.name === "foo"
+end
+```
+
+Mappings also supports transforming data. This can be useful when we want random data but with a bit more control before inserting into the database:
+In the example, the custom module does not implement the mapping, so the Faker one is taken. Then, the `transform/2` is called to alter the data.
+
+```elixir
+defmodule MyAppTest.Transform do
+  @behaviour Factori.Mapping
+  def transform(%{name: :password}, value), do: Bcrypt.hash_pwd_salt(value)
+end
+
+defmodule MyAppTest.Factory do
+  use Factori,
+    repo: MyApp.Repo,
+    mappings: [Transform, Factori.Mapping.Faker]
+end
+
+test "transforms" do
+  user = Factory.insert("users", password: "test123")
+  assert user.password === "$2b$12$3.EX0EHSwjNewmD18Ir5A.brKyJh3.DCKzLjX96wCwovzie2I1wcW"
+end
+```
+
+The first module to implement a matching `match` function will be taken, but the `transform` is called on every items in `mappings` options.
+
 ### Variants
 
 Instead of using string to reference the "raw" table names, you can use named variants:

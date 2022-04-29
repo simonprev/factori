@@ -33,7 +33,7 @@ defmodule Factori.VariantsTest do
           repo: Factori.TestRepo,
           variants: [{:user, "users"}],
           mappings: [
-            fn %{name: :id} -> "1" end
+            [match: fn %{name: :id} -> "1" end]
           ]
       end
 
@@ -51,7 +51,7 @@ defmodule Factori.VariantsTest do
           repo: Factori.TestRepo,
           variants: [{:user, "users", id: "3"}],
           mappings: [
-            fn %{name: :id} -> "1" end
+            [match: fn %{name: :id} -> "1" end]
           ]
       end
 
