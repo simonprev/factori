@@ -7,7 +7,12 @@ defmodule Factori.ReferencesTest do
     test "reference" do
       create_table!(:reference_users, [{:add, :id, :integer, [primary_key: true, null: false]}])
 
-      reference = %Ecto.Migration.Reference{name: :author_id, type: :bigint, table: :reference_users}
+      reference = %Ecto.Migration.Reference{
+        name: :author_id,
+        type: :bigint,
+        table: :reference_users
+      }
+
       create_table!(:reference_posts, [{:add, :author_id, reference, [null: false]}])
 
       defmodule ReferenceFactory do
@@ -31,8 +36,17 @@ defmodule Factori.ReferencesTest do
         {:add, :id, :integer, [primary_key: true, null: false]}
       ])
 
-      author_reference = %Ecto.Migration.Reference{name: :author_id, type: :bigint, table: :reuse_reference_users}
-      owner_reference = %Ecto.Migration.Reference{name: :owner_id, type: :bigint, table: :reuse_reference_users}
+      author_reference = %Ecto.Migration.Reference{
+        name: :author_id,
+        type: :bigint,
+        table: :reuse_reference_users
+      }
+
+      owner_reference = %Ecto.Migration.Reference{
+        name: :owner_id,
+        type: :bigint,
+        table: :reuse_reference_users
+      }
 
       other_user_reference = %Ecto.Migration.Reference{
         name: :other_user_id,
