@@ -1,7 +1,4 @@
 defmodule Factori.Attributes do
-  alias Factori.Ecto, as: FactoryEcto
-  alias Factori.Storage
-
   require Logger
 
   defmodule CyclicNonNullableReferenceError do
@@ -33,7 +30,7 @@ defmodule Factori.Attributes do
         existing_reference_value
 
       source_column && source_column.table_name === reference_table_name ->
-        if column.options[:null] do
+        if column.options.null do
           nil
         else
           raise CyclicNonNullableReferenceError,
@@ -47,14 +44,14 @@ defmodule Factori.Attributes do
     end
   end
 
-  def map(factory, mappings, table_name, attrs, storage_name, source_column \\ nil) do
+  def map(factory, mappings, table_name, attrs, {storage, storage_name}, source_column \\ nil) do
     columns =
       table_name
-      |> Storage.get_schema_columns(storage_name)
+      |> storage.get(storage_name)
       |> Enum.sort_by(&((&1.reference && 1) || 0))
 
     {db_attrs, struct_attrs} =
-      Enum.split_with(attrs, fn attr ->
+      Enum.split_with(attrs, fn {attr, _} ->
         Enum.find(columns, &(&1.name === attr))
       end)
 
@@ -85,7 +82,7 @@ defmodule Factori.Attributes do
             end)
           end
 
-        value = FactoryEcto.dump_value(value, column.ecto_type)
+        value = Factori.Ecto.dump_value(value, column.ecto_type)
         [{column.name, value} | attrs]
       end)
 
@@ -111,36 +108,26 @@ defmodule Factori.Attributes do
   end
 
   defp find_mapping_value(mapping, column) when is_list(mapping) do
-    if column.options.null do
-      if nil_probability?(), do: mapping[:match].(column), else: nil
-    else
-      mapping[:match].(column)
-    end
+    maybe_nil(column, fn -> mapping[:match].(column) end)
   rescue
     FunctionClauseError -> :not_found
   end
 
   defp find_mapping_value(mapping, column) when is_function(mapping) do
-    if column.options.null do
-      if nil_probability?(), do: mapping.(column), else: nil
-    else
-      mapping.(column)
-    end
+    maybe_nil(column, fn -> mapping.(column) end)
   rescue
     FunctionClauseError -> :not_found
   end
 
   defp find_mapping_value(module, column) when is_atom(module) do
-    if column.options.null do
-      if nil_probability?(), do: module.match(column), else: nil
-    else
-      module.match(column)
-    end
+    maybe_nil(column, fn -> module.match(column) end)
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp nil_probability? do
-    hd(Enum.take_random([true, false], 1))
+  defp maybe_nil(column, func) do
+    if column.options.null && nil_probability?(), do: nil, else: func.()
   end
+
+  defp nil_probability?, do: Enum.random([true, false])
 end

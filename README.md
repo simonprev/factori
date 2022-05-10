@@ -1,8 +1,18 @@
 # Factori
 
-## Installation
+Test data without boilerplate. Always in-sync with your database schema.
 
-**To install in all environments (useful for generating seed data in dev/prod):**
+```elixir
+defmodule MyAppTest.Factory do
+  use Factori, repo: MyApp.Repo, mappings: [Factori.Mapping.Faker]
+end
+
+user = MyAppTest.Factory.insert("users")
+user.first_name # => "Lorem"
+user.last_name # => "Ipsum"
+```
+
+## Installation
 
 In `mix.exs`, add the factori dependency:
 

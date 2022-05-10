@@ -1,8 +1,10 @@
 defmodule Factori.Mapping.Faker do
   @behaviour Factori.Mapping
 
+  alias Faker.Lorem
+
   @ranges %{
-    smallint: -32768..32767,
+    smallint: -32_768..32_767,
     integer: -2_147_483_648..2_147_483_647,
     serial: 1..2_147_483_647,
     bigserial: 1..9_223_372_036_854_775_807
@@ -17,7 +19,7 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "float4"}), do: Enum.random(@ranges.serial)
   def match(%{type: "float8"}), do: Enum.random(@ranges.bigserial)
   def match(%{type: "numeric"}), do: Enum.random(@ranges.bigserial)
-  def match(%{type: "text"}), do: Faker.Lorem.paragraph(5)
+  def match(%{type: "text"}), do: Lorem.paragraph(5)
   def match(%{type: "bool"}), do: Enum.random([true, false])
   def match(%{type: "time"}), do: time()
   def match(%{type: "date"}), do: date()
@@ -39,14 +41,14 @@ defmodule Factori.Mapping.Faker do
   defp readable_varchar(options) do
     max_size = options[:size] || 255
 
-    String.slice(Faker.Lorem.sentence(max_size), 1..max_size)
+    String.slice(Lorem.sentence(max_size), 1..max_size)
   end
 
   defp varchar(options) do
     max_size = options[:size] || 255
 
     size = Enum.random(1..max_size)
-    to_string(Faker.Lorem.characters(size))
+    to_string(Lorem.characters(size))
   end
 
   defp time do

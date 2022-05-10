@@ -1,7 +1,7 @@
 defmodule Factori.Mixfile do
   use Mix.Project
 
-  def project() do
+  def project do
     [
       app: :factori,
       version: "0.0.2",
@@ -16,25 +16,28 @@ defmodule Factori.Mixfile do
     ]
   end
 
-  def application() do
+  def application do
     [
       extra_applications: [:logger]
     ]
   end
 
-  defp deps() do
+  defp deps do
     [
       {:ex_doc, "~> 0.14", only: :dev},
       {:earmark, ">= 0.0.0", only: :dev},
       {:faker, "~> 0.16"},
       {:ecto, "~> 3.0"},
       {:ecto_sql, "~> 3.0"},
-      {:jason, "~> 1.0", only: :test},
-      {:postgrex, "~> 0.14", only: :test}
+      {:jason, "~> 1.0", only: [:dev, :test]},
+      {:postgrex, "~> 0.14", only: :test},
+      {:credo, "~> 1.1", only: [:dev, :test], override: true},
+      {:credo_envvar, "~> 0.1", only: [:dev, :test], runtime: false},
+      {:credo_naming, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end
 
-  defp package() do
+  defp package do
     [
       maintainers: ["Simon Prévost"],
       licenses: ["MIT"],
@@ -46,5 +49,5 @@ defmodule Factori.Mixfile do
 
   defp elixirc_paths(:test), do: elixirc_paths() ++ ["test/support"]
   defp elixirc_paths(_), do: elixirc_paths()
-  defp elixirc_paths(), do: ["lib"]
+  defp elixirc_paths, do: ["lib"]
 end
