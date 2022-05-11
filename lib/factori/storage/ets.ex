@@ -5,7 +5,7 @@ defmodule Factori.Storage.ETS do
 
   def init(name) do
     if ETS.whereis(name) !== :undefined, do: ETS.delete(name)
-    ETS.new(name, [:named_table])
+    ETS.new(name, [:named_table, :public])
 
     :ok
   end
