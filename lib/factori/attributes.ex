@@ -15,7 +15,7 @@ defmodule Factori.Attributes do
     end
   end
 
-  defp fetch_reference_value(insert, columns, attrs, column, source_column) do
+  defp fetch_reference_value(config, insert_func, columns, attrs, column, source_column) do
     {reference_table_name, reference_column_name} = column.reference
 
     existing_reference_value =
@@ -39,15 +39,15 @@ defmodule Factori.Attributes do
         end
 
       true ->
-        record = insert.(reference_table_name, [], column)
+        record = insert_func.(config, reference_table_name, [], column)
         Map.get(record, reference_column_name)
     end
   end
 
-  def map(factory, mappings, table_name, attrs, {storage, storage_name}, source_column \\ nil) do
+  def map(config, insert_func, table_name, attrs, source_column) do
     columns =
       table_name
-      |> storage.get(storage_name)
+      |> config.storage.get(config.storage_name)
       |> Enum.sort_by(&((&1.reference && 1) || 0))
 
     {db_attrs, struct_attrs} =
@@ -59,18 +59,18 @@ defmodule Factori.Attributes do
       Enum.reduce(columns, db_attrs, fn column, attrs ->
         value =
           if column.reference do
-            fetch_reference_value(&factory.insert/3, columns, attrs, column, source_column)
+            fetch_reference_value(config, insert_func, columns, attrs, column, source_column)
           else
             Keyword.get_lazy(attrs, column.name, fn ->
               value_mapping =
-                Enum.find_value(mappings, fn mapping ->
-                  value = find_mapping_value(mapping, column)
+                Enum.find_value(config.mappings, fn mapping ->
+                  value = find_mapping_value(mapping, column, config.options)
                   value !== :not_found && {:ok, value}
                 end)
 
               case value_mapping do
                 {:ok, value} ->
-                  Enum.reduce(mappings, value, fn mapping, acc ->
+                  Enum.reduce(config.mappings, value, fn mapping, acc ->
                     find_transformed_value(mapping, column, acc)
                   end)
 
@@ -107,27 +107,27 @@ defmodule Factori.Attributes do
       else: value
   end
 
-  defp find_mapping_value(mapping, column) when is_list(mapping) do
-    maybe_nil(column, fn -> mapping[:match].(column) end)
+  defp find_mapping_value(mapping, column, options) when is_list(mapping) do
+    maybe_nil(column, options, fn -> mapping[:match].(column) end)
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp find_mapping_value(mapping, column) when is_function(mapping) do
-    maybe_nil(column, fn -> mapping.(column) end)
+  defp find_mapping_value(mapping, column, options) when is_function(mapping) do
+    maybe_nil(column, options, fn -> mapping.(column) end)
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp find_mapping_value(module, column) when is_atom(module) do
-    maybe_nil(column, fn -> module.match(column) end)
+  defp find_mapping_value(module, column, options) when is_atom(module) do
+    maybe_nil(column, options, fn -> module.match(column) end)
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp maybe_nil(column, func) do
-    if column.options.null && nil_probability?(), do: nil, else: func.()
+  defp maybe_nil(column, options, func) do
+    if column.options.null && nil_probability?(options), do: nil, else: func.()
   end
 
-  defp nil_probability?, do: Enum.random([true, false])
+  defp nil_probability?(options), do: :rand.uniform() > options.nil_probability
 end

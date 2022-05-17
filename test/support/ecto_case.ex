@@ -13,6 +13,10 @@ defmodule Factori.EctoCase do
         |> IO.iodata_to_binary()
         |> Factori.TestRepo.query!()
       end
+
+      def query!(query) do
+        Factori.TestRepo.query!(query).rows
+      end
     end
   end
 

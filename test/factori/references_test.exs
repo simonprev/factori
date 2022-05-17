@@ -31,6 +31,35 @@ defmodule Factori.ReferencesTest do
       assert post.author_id === user_id
     end
 
+    test "list reference" do
+      create_table!(:reference_users, [{:add, :id, :integer, [primary_key: true, null: false]}])
+
+      reference = %Ecto.Migration.Reference{
+        name: :author_id,
+        type: :bigint,
+        table: :reference_users
+      }
+
+      create_table!(:reference_posts, [{:add, :author_id, reference, [null: false]}])
+
+      defmodule ListReferenceFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [Factori.Mapping.Faker]
+      end
+
+      ListReferenceFactory.bootstrap()
+
+      [post_1, post_2] = ListReferenceFactory.insert_list("reference_posts", 2)
+
+      user_ids =
+        List.flatten(Factori.TestRepo.query!("select id from reference_users limit 2").rows)
+
+      assert post_1.author_id !== post_2.author_id
+      assert post_1.author_id in user_ids
+      assert post_2.author_id in user_ids
+    end
+
     test "reuse reference" do
       create_table!(:reuse_reference_users, [
         {:add, :id, :integer, [primary_key: true, null: false]}

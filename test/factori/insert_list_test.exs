@@ -1,14 +1,14 @@
-defmodule Factori.VariantsTest do
+defmodule Factori.InsertListTest do
   use Factori.EctoCase, async: true
 
-  describe "variants" do
+  describe "insert_list" do
     test "unknown" do
       defmodule UnknownFactory do
         use Factori, repo: Factori.TestRepo
       end
 
       assert_raise Factori.UndefinedVariantError, ~r/foo/, fn ->
-        UnknownFactory.insert(:foo)
+        UnknownFactory.insert_list(:foo)
       end
     end
 
@@ -21,8 +21,25 @@ defmodule Factori.VariantsTest do
       end
 
       assert_raise Factori.InvalidSchemaError, ~r/invalid_variant_name/, fn ->
-        InvalidFactory.insert(:invalid_variant_name)
+        InvalidFactory.insert_list(:invalid_variant_name)
       end
+    end
+
+    test "table" do
+      create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
+
+      defmodule TableUserFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [
+            fn %{name: :id} -> "1" end
+          ]
+      end
+
+      TableUserFactory.bootstrap()
+
+      [named] = TableUserFactory.insert_list("users")
+      assert named.id === "1"
     end
 
     test "name" do
@@ -39,8 +56,26 @@ defmodule Factori.VariantsTest do
 
       UserFactory.bootstrap()
 
-      named = UserFactory.insert(:user)
+      [named] = UserFactory.insert_list(:user)
       assert named.id === "1"
+    end
+
+    test "count" do
+      create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
+
+      defmodule CountUserFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          variants: [{:user, "users"}],
+          mappings: [
+            [match: fn %{name: :id} -> "1" end]
+          ]
+      end
+
+      CountUserFactory.bootstrap()
+
+      users = CountUserFactory.insert_list(:user, 10)
+      assert length(users) === 10
     end
 
     test "name with override" do
@@ -57,25 +92,7 @@ defmodule Factori.VariantsTest do
 
       UserOverrideFactory.bootstrap()
 
-      named = UserOverrideFactory.insert(:user)
-      assert named.id === "3"
-    end
-
-    test "list name with override" do
-      create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
-
-      defmodule ListUserOverrideFactory do
-        use Factori,
-          repo: Factori.TestRepo,
-          variants: [{:user, "users", id: "3"}],
-          mappings: [
-            [match: fn %{name: :id} -> "1" end]
-          ]
-      end
-
-      ListUserOverrideFactory.bootstrap()
-
-      [named, _] = ListUserOverrideFactory.insert_list(:user, 2)
+      [named] = UserOverrideFactory.insert_list(:user)
       assert named.id === "3"
     end
   end

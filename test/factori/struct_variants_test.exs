@@ -47,5 +47,28 @@ defmodule Factori.StructVariantsTest do
       assert named.__struct__ === UserOverrideStruct
       assert named.id === "3"
     end
+
+    test "list struct with override" do
+      create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
+
+      defmodule ListUserOverrideStruct do
+        defstruct id: nil
+      end
+
+      defmodule ListUserOverrideFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          variants: [{:user, "users", ListUserOverrideStruct, id: "3"}],
+          mappings: [
+            fn %{name: :id} -> "1" end
+          ]
+      end
+
+      ListUserOverrideFactory.bootstrap()
+
+      [named, _] = ListUserOverrideFactory.insert_list(:user, 2)
+      assert named.__struct__ === ListUserOverrideStruct
+      assert named.id === "3"
+    end
   end
 end

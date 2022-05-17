@@ -19,12 +19,12 @@ defmodule Factori.Bootstrap do
     @type t :: %__MODULE__{}
   end
 
-  def init(name, storage), do: storage.init(name)
+  def init(config = %Factori.Config{}), do: config.storage.init(config.storage_name)
 
-  def bootstrap(repo, name, adapter, storage) do
-    repo
-    |> adapter.columns!()
-    |> Enum.each(&storage.insert(&1, name))
+  def bootstrap(config = %Factori.Config{}) do
+    config.repo
+    |> config.adapter.columns!()
+    |> Enum.each(&config.storage.insert(&1, config.storage_name))
   end
 
   def query!(repo, query) do

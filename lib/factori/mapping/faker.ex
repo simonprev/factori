@@ -27,6 +27,8 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "timestampz"}), do: timestamp()
   def match(%{type: "char", options: options}), do: varchar(options)
   def match(%{type: "bytea", options: options}), do: varchar(options)
+  def match(%{type: "varchar", name: "email"}), do: Faker.Internet.email()
+  def match(%{type: "varchar", name: "phone_number"}), do: Faker.Phone.EnUs.phone()
 
   def match(%{type: "varchar", name: name, options: options}) do
     if String.ends_with?(to_string(name), "_id") do

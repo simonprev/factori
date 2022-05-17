@@ -34,6 +34,7 @@
         {Credo.Check.Readability.VariableNames},
         {Credo.Check.Refactor.CaseTrivialMatches},
         {Credo.Check.Refactor.CondStatements},
+        {Credo.Check.Refactor.CyclomaticComplexity, false},
         {Credo.Check.Refactor.FunctionArity},
         {Credo.Check.Refactor.MapInto, false},
         {Credo.Check.Refactor.MatchInCondition},

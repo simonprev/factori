@@ -4,4 +4,4 @@ config :factori, Factori.TestRepo,
   pool: Ecto.Adapters.SQL.Sandbox,
   url: System.get_env("DATABASE_URL")
 
-config :logger, level: :warn
+config :logger, level: :info

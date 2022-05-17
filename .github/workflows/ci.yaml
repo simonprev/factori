@@ -1,0 +1,53 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp-version: [24.2]
+        elixir-version: [1.13.1]
+
+    services:
+      db:
+        image: postgres:12
+        env:
+          POSTGRES_DB: shopcast_test
+          POSTGRES_PASSWORD: boilerplate
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    env:
+      MIX_ENV: test
+      DATABASE_URL: postgres://postgres:boilerplate@localhost/factori_test
+      DATABASE_POOL_SIZE: 30
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: erlef/setup-elixir@v1
+        with:
+          elixir-version: ${{ matrix.elixir-version }}
+          otp-version: ${{ matrix.otp-version }}
+
+      - uses: actions/cache@v1
+        id: deps-cache
+        with:
+          path: deps
+          key: ${{ runner.os }}-deps-${{ hashFiles(format('{0}/mix.lock', github.workspace)) }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
+      - uses: actions/cache@v1
+        id: build-cache
+        with:
+          path: _build
+          key: ${{ runner.os }}-build-${{ matrix.otp-version }}-${{ matrix.elixir-version }}-${{ hashFiles(format('{0}/mix.lock', github.workspace)) }}
+
+      - run: make prepare
+      - run: make check-format
+      - run: make check-unused-dependencies
+      - run: make lint
+      - run: make test
