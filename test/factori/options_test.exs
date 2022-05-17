@@ -8,7 +8,7 @@ defmodule Factori.OptionsTest do
       defmodule NeverNilProbabilityFactory do
         use Factori,
           repo: Factori.TestRepo,
-          options: [nil_probability: 0],
+          options: [nil_probability: 1],
           mappings: [fn _ -> "1" end]
       end
 
@@ -24,7 +24,7 @@ defmodule Factori.OptionsTest do
       defmodule AlwaysNilProbabilityFactory do
         use Factori,
           repo: Factori.TestRepo,
-          options: [nil_probability: 1],
+          options: [nil_probability: 0],
           mappings: [fn _ -> "1" end]
       end
 

@@ -184,7 +184,7 @@ defmodule Factori do
   defp map_attributes(config, table_name, attrs, source_column) do
     Attributes.map(
       config,
-      &insert/4,
+      &insert/5,
       table_name,
       List.wrap(attrs),
       source_column

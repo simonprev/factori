@@ -15,35 +15,6 @@ defmodule Factori.Attributes do
     end
   end
 
-  defp fetch_reference_value(config, insert_func, columns, attrs, column, source_column) do
-    {reference_table_name, reference_column_name} = column.reference
-
-    existing_reference_value =
-      columns
-      |> Enum.filter(&(&1.reference === column.reference))
-      |> Enum.map(&Keyword.get(attrs, &1.name))
-      |> Enum.reject(&is_nil/1)
-      |> List.first()
-
-    cond do
-      not is_nil(existing_reference_value) ->
-        existing_reference_value
-
-      source_column && source_column.table_name === reference_table_name ->
-        if column.options.null do
-          nil
-        else
-          raise CyclicNonNullableReferenceError,
-            source_column: source_column,
-            column: column
-        end
-
-      true ->
-        record = insert_func.(config, reference_table_name, [], column)
-        Map.get(record, reference_column_name)
-    end
-  end
-
   def map(config, insert_func, table_name, attrs, source_column) do
     columns =
       table_name
@@ -59,7 +30,7 @@ defmodule Factori.Attributes do
       Enum.reduce(columns, db_attrs, fn column, attrs ->
         value =
           if column.reference do
-            fetch_reference_value(config, insert_func, columns, attrs, column, source_column)
+            fetch_reference(config, insert_func, columns, attrs, column, source_column)
           else
             Keyword.get_lazy(attrs, column.name, fn ->
               value_mapping =
@@ -87,6 +58,35 @@ defmodule Factori.Attributes do
       end)
 
     {db_attrs, struct_attrs}
+  end
+
+  defp fetch_reference(config, insert_func, columns, attrs, column, source_column) do
+    {reference_table_name, reference_column_name} = column.reference
+
+    existing_reference_value =
+      columns
+      |> Enum.filter(&(&1.reference === column.reference))
+      |> Enum.map(&Keyword.get(attrs, &1.name))
+      |> Enum.reject(&is_nil/1)
+      |> List.first()
+
+    cond do
+      not is_nil(existing_reference_value) ->
+        existing_reference_value
+
+      source_column && source_column.table_name === reference_table_name ->
+        if column.options.null do
+          nil
+        else
+          raise CyclicNonNullableReferenceError,
+            source_column: source_column,
+            column: column
+        end
+
+      true ->
+        reference = insert_func.(config, reference_table_name, [], column, nil)
+        Map.get(reference, reference_column_name)
+    end
   end
 
   defp find_transformed_value(_mapping, _column, nil), do: nil
@@ -129,5 +129,5 @@ defmodule Factori.Attributes do
     if column.options.null && nil_probability?(options), do: nil, else: func.()
   end
 
-  defp nil_probability?(options), do: :rand.uniform() > options.nil_probability
+  defp nil_probability?(options), do: :rand.uniform() < options.nil_probability
 end
