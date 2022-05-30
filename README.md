@@ -4,7 +4,7 @@ Test data without boilerplate. Always in-sync with your database schema.
 
 ```elixir
 defmodule MyAppTest.Factory do
-  use Factori, repo: MyApp.Repo, mappings: [Factori.Mapping.Faker]
+  use Factori, repo: MyApp.Repo, mappings: [Factori.Mapping.Faker, Factori.Mapping.Enum]
 end
 
 user = MyAppTest.Factory.insert("users")

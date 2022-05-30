@@ -1,14 +1,14 @@
 defmodule Factori.Mapping.Faker do
   @behaviour Factori.Mapping
 
-  alias Faker.Lorem
-
   @ranges %{
     smallint: -32_768..32_767,
     integer: -2_147_483_648..2_147_483_647,
     serial: 1..2_147_483_647,
     bigserial: 1..9_223_372_036_854_775_807
   }
+
+  alias Faker.Lorem
 
   def match(%{type: "uuid"}), do: Ecto.UUID.generate()
   def match(%{type: "json"}), do: %{}
@@ -19,8 +19,9 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "float4"}), do: Enum.random(@ranges.serial)
   def match(%{type: "float8"}), do: Enum.random(@ranges.bigserial)
   def match(%{type: "numeric"}), do: Enum.random(@ranges.bigserial)
-  def match(%{type: "text"}), do: Lorem.paragraph(5)
   def match(%{type: "bool"}), do: Enum.random([true, false])
+
+  def match(%{type: "text"}), do: Lorem.paragraph(5)
   def match(%{type: "time"}), do: time()
   def match(%{type: "date"}), do: date()
   def match(%{type: "timestamp"}), do: timestamp()

@@ -1,4 +1,10 @@
 defmodule Factori.Bootstrap do
+  defmodule EnumDefinition do
+    defstruct name: nil, values: []
+
+    @type t :: %__MODULE__{}
+  end
+
   defmodule ReferenceDefinition do
     defstruct target: nil,
               target_column: nil,
@@ -14,7 +20,8 @@ defmodule Factori.Bootstrap do
               type: nil,
               options: %{},
               ecto_type: nil,
-              reference: nil
+              reference: nil,
+              enum: nil
 
     @type t :: %__MODULE__{}
   end

@@ -31,8 +31,19 @@ defmodule Factori.Adapter.Postgresql do
     INNER JOIN information_schema.key_column_usage ON referential_constraints. "constraint_name" = key_column_usage. "constraint_name"
   """
 
+  @enums """
+  SELECT
+      pg_type.typname AS enum_name,
+      pg_enum.enumlabel AS enum_value
+  FROM
+      pg_type
+      JOIN pg_enum ON pg_type.oid = pg_enum.enumtypid
+      JOIN pg_catalog.pg_namespace ON pg_namespace.oid = pg_type.typnamespace;
+  """
+
   def columns!(repo) do
     references = reference_definitions(repo)
+    enums = enums_definitions(repo)
 
     repo
     |> Bootstrap.query!(@columns)
@@ -42,13 +53,25 @@ defmodule Factori.Adapter.Postgresql do
 
       columns =
         columns
-        |> Enum.map(&generate_column_definition(references, &1))
+        |> Enum.map(&generate_column_definition(references, enums, &1))
         |> Enum.group_by(& &1.name)
         |> Enum.map(fn {name, [definition]} -> {name, definition} end)
         |> Enum.into(%{})
         |> Map.values()
 
       Map.put(acc, table_name, columns)
+    end)
+  end
+
+  defp enums_definitions(repo) do
+    repo
+    |> Bootstrap.query!(@enums)
+    |> Enum.group_by(&hd(&1), &Enum.at(&1, 1))
+    |> Enum.map(fn {enum_value, enum_labels} ->
+      %Bootstrap.EnumDefinition{
+        name: enum_value,
+        values: enum_labels
+      }
     end)
   end
 
@@ -66,7 +89,7 @@ defmodule Factori.Adapter.Postgresql do
     |> Enum.group_by(& &1.source)
   end
 
-  defp generate_column_definition(references, [
+  defp generate_column_definition(references, enums, [
          table_name,
          name,
          type,
@@ -83,12 +106,15 @@ defmodule Factori.Adapter.Postgresql do
         _ -> nil
       end
 
+    enum = Enum.find(enums, &(&1.name === type))
+
     %Bootstrap.ColumnDefinition{
       table_name: table_name,
       name: identifier,
       type: type,
       ecto_type: Factori.Ecto.to_ecto_type(type),
       reference: reference,
+      enum: enum,
       options: %{
         null: null === "YES",
         size: size
