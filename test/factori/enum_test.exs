@@ -17,5 +17,21 @@ defmodule Factori.EnumTest do
       user = UserFactory.insert("users")
       assert user.type in ["admin", "user"]
     end
+
+    test "from schema ecto enum" do
+      Code.ensure_compiled!(UserEnumSchema)
+      create_table!(:users, [{:add, :type_enum, :string, [null: false]}])
+
+      defmodule UserFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [Factori.Mapping.Enum]
+      end
+
+      UserFactory.bootstrap()
+
+      user = UserFactory.insert("users")
+      assert user.type_enum in ["admin", "user"]
+    end
   end
 end
