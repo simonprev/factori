@@ -43,7 +43,9 @@ defmodule Factori.Adapter.Postgresql do
 
   def columns!(repo) do
     references = reference_definitions(repo)
-    enums = enums_definitions(repo)
+    db_enums = enums_definitions(repo)
+
+    schemas = schemas(repo)
 
     repo
     |> Bootstrap.query!(@columns)
@@ -51,9 +53,12 @@ defmodule Factori.Adapter.Postgresql do
     |> Enum.reduce(%{}, fn {table_name, columns}, acc ->
       references = Map.get(references, table_name, [])
 
+      ecto_schema =
+        Enum.find_value(schemas, fn {module, table} -> table == table_name && module end)
+
       columns =
         columns
-        |> Enum.map(&generate_column_definition(references, enums, &1))
+        |> Enum.map(&generate_column_definition(references, ecto_schema, db_enums, &1))
         |> Enum.group_by(& &1.name)
         |> Enum.map(fn {name, [definition]} -> {name, definition} end)
         |> Enum.into(%{})
@@ -89,7 +94,7 @@ defmodule Factori.Adapter.Postgresql do
     |> Enum.group_by(& &1.source)
   end
 
-  defp generate_column_definition(references, enums, [
+  defp generate_column_definition(references, schema, db_enums, [
          table_name,
          name,
          type,
@@ -106,7 +111,13 @@ defmodule Factori.Adapter.Postgresql do
         _ -> nil
       end
 
-    enum = Enum.find(enums, &(&1.name === type))
+    enums =
+      db_enums
+      |> Enum.find(&(&1.name === type))
+      |> case do
+        nil -> enum_mappings(schema, name)
+        v -> v
+      end
 
     %Bootstrap.ColumnDefinition{
       table_name: table_name,
@@ -114,11 +125,31 @@ defmodule Factori.Adapter.Postgresql do
       type: type,
       ecto_type: Factori.Ecto.to_ecto_type(type),
       reference: reference,
-      enum: enum,
+      enum: enums,
       options: %{
         null: null === "YES",
         size: size
       }
     }
+  end
+
+  defp enum_mappings(schema, column_name) do
+    values =
+      schema
+      |> Ecto.Enum.values(String.to_existing_atom(column_name))
+      |> Enum.map(&to_string/1)
+
+    %{name: column_name, values: values}
+  rescue
+    ArgumentError -> []
+  end
+
+  defp schemas(repo) do
+    otp_app = Keyword.get(repo.config, :otp_app)
+    {:ok, modules} = :application.get_key(otp_app, :modules)
+
+    modules
+    |> Enum.filter(&function_exported?(&1, :__schema__, 1))
+    |> Enum.map(&{&1, &1.__schema__(:source)})
   end
 end
