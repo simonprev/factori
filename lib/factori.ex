@@ -192,12 +192,14 @@ defmodule Factori do
   end
 
   defp insert_all(config, table_name, attrs) do
+    columns = config.storage.get(table_name, config.storage_name)
+    returning = Enum.map(columns, & &1.name)
+
     attrs
     |> Enum.chunk_every(1000)
     |> Enum.flat_map(fn attrs ->
-      case config.repo.insert_all(table_name, attrs, returning: Keyword.keys(hd(attrs))) do
+      case config.repo.insert_all(table_name, attrs, returning: returning) do
         {_, records} ->
-          columns = config.storage.get(table_name, config.storage_name)
           Enum.map(records, &load_record_values(&1, columns))
 
         _ ->

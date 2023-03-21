@@ -19,6 +19,7 @@ defmodule Factori.Attributes do
     columns =
       table_name
       |> config.storage.get(config.storage_name)
+      |> Enum.reject(& &1.options.ignore)
       |> Enum.sort_by(&((&1.reference && 1) || 0))
 
     {db_attrs, struct_attrs} =

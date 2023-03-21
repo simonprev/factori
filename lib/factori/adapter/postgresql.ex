@@ -7,6 +7,7 @@ defmodule Factori.Adapter.Postgresql do
     column_name,
     udt_name,
     is_nullable,
+    is_generated,
     character_maximum_length
   FROM
     information_schema.columns
@@ -99,6 +100,7 @@ defmodule Factori.Adapter.Postgresql do
          name,
          type,
          null,
+         generated,
          size
        ]) do
     identifier = String.to_atom(name)
@@ -128,6 +130,7 @@ defmodule Factori.Adapter.Postgresql do
       enum: enums,
       options: %{
         null: null === "YES",
+        ignore: generated === "ALWAYS",
         size: size
       }
     }
