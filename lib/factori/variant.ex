@@ -69,8 +69,7 @@ defmodule Factori.Variant do
         {:table_name, {table_name, attrs}}
 
       {_, struct_module} when is_atom(struct_module) ->
-        if function_exported?(struct_module, :__schema__, 1) do
-          table_name = struct_module.__schema__(:source)
+        if table_name = struct_module_source!(struct_module) do
           {:struct, {table_name, attrs, struct_module}}
         else
           {:error, {:invalid_schema, struct_module}}
@@ -84,9 +83,8 @@ defmodule Factori.Variant do
         {:struct, {table_name, attrs, struct_module}}
 
       {_, struct_module, variant_attrs} when is_atom(struct_module) and is_list(variant_attrs) ->
-        if function_exported?(struct_module, :__schema__, 1) do
+        if table_name = struct_module_source!(struct_module) do
           attrs = Keyword.merge(variant_attrs, attrs || [])
-          table_name = struct_module.__schema__(:source)
           {:struct, {table_name, attrs, struct_module}}
         else
           {:error, {:invalid_schema, struct_module}}
@@ -100,5 +98,13 @@ defmodule Factori.Variant do
       _ ->
         {:error, :undefined_variant}
     end
+  end
+
+  # To ensure that the schema is valid, we call the __schema__ instrospection function declared by Ecto.Schema
+  # We can’t use reliably function_exported?/3 since the struct_module is sometimes not loaded yet.
+  defp struct_module_source!(struct_module) do
+    struct_module.__schema__(:source)
+  rescue
+    UndefinedFunctionError -> nil
   end
 end
