@@ -102,6 +102,29 @@ defmodule Factori.ReferencesTest do
       assert post.author_id === post.owner_id
     end
 
+    test "nullable override reference" do
+      create_table!(:reference_users, [{:add, :id, :integer, [primary_key: true, null: false]}])
+
+      reference = %Ecto.Migration.Reference{
+        name: :author_id,
+        type: :bigint,
+        table: :reference_users
+      }
+
+      create_table!(:reference_posts, [{:add, :author_id, reference, [null: true]}])
+
+      defmodule NullableOverrideReferenceFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [Factori.Mapping.Faker]
+      end
+
+      NullableOverrideReferenceFactory.bootstrap()
+
+      post = NullableOverrideReferenceFactory.insert("reference_posts", author_id: nil)
+      refute post.author_id
+    end
+
     test "double reference" do
       create_table!(:users, [
         {:add, :id, :integer, [primary_key: true, null: false]}

@@ -29,11 +29,11 @@ defmodule Factori.Attributes do
 
     db_attrs =
       Enum.reduce(columns, db_attrs, fn column, attrs ->
-        value =
+        new_value =
           if column.reference do
-            fetch_reference(config, insert_func, columns, attrs, column, source_column)
+            fn -> fetch_reference(config, insert_func, columns, attrs, column, source_column) end
           else
-            Keyword.get_lazy(attrs, column.name, fn ->
+            fn ->
               value_mapping =
                 Enum.find_value(config.mappings, fn mapping ->
                   value = find_mapping_value(mapping, column, config.options)
@@ -51,9 +51,10 @@ defmodule Factori.Attributes do
 
                   nil
               end
-            end)
+            end
           end
 
+        value = Keyword.get_lazy(attrs, column.name, new_value)
         value = Factori.Ecto.dump_value(value, column.ecto_type)
         [{column.name, value} | attrs]
       end)
