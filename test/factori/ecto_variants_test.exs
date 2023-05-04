@@ -4,7 +4,7 @@ defmodule Factori.EctoVariantsTest do
   describe "no variants" do
     test "schema" do
       create_table!(:users, [
-        {:add, :name, :string, [size: 1, null: true]}
+        {:add, :name, :string, [size: 1, null: false]}
       ])
 
       defmodule UserNoVariantsSchema do
