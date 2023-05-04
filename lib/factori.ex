@@ -6,6 +6,12 @@ defmodule Factori do
     defexception [:name, :variants]
 
     @impl true
+    def message(%{name: name, variants: []}) do
+      """
+      `#{inspect(name)}` is not a valid variant name. No variants were defined in your Factory module.
+      """
+    end
+
     def message(%{name: name, variants: variants}) do
       """
       `#{inspect(name)}` is not a valid variant name.

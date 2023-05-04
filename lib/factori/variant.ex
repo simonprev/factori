@@ -1,6 +1,6 @@
 defmodule Factori.Variant do
   def insert(config, variant, variant_name, attrs, source_column) do
-    case parse_arguments(variant, attrs) do
+    case parse_arguments(variant, variant_name, attrs) do
       {:table_name, {table_name, attrs}} ->
         Factori.insert(config, table_name, attrs, source_column)
 
@@ -16,7 +16,7 @@ defmodule Factori.Variant do
   end
 
   def build(config, variant, variant_name, attrs, source_column) do
-    case parse_arguments(variant, attrs) do
+    case parse_arguments(variant, variant_name, attrs) do
       {:table_name, {table_name, attrs}} ->
         Factori.build(config, table_name, attrs, source_column)
 
@@ -32,7 +32,7 @@ defmodule Factori.Variant do
   end
 
   def insert_list(config, variant, variant_name, count, attrs, source_column) do
-    case parse_arguments(variant, attrs) do
+    case parse_arguments(variant, variant_name, attrs) do
       {:table_name, {table_name, attrs}} ->
         Factori.insert_list(config, table_name, count, attrs, source_column)
 
@@ -48,7 +48,7 @@ defmodule Factori.Variant do
   end
 
   def seed(config, variant, variant_name, count, attrs, source_column) do
-    case parse_arguments(variant, attrs) do
+    case parse_arguments(variant, variant_name, attrs) do
       {:table_name, {table_name, attrs}} ->
         Factori.seed(config, table_name, count, attrs, source_column, nil)
 
@@ -63,7 +63,7 @@ defmodule Factori.Variant do
     end
   end
 
-  defp parse_arguments(variant, attrs) do
+  defp parse_arguments(variant, variant_name, attrs) do
     case variant do
       {_, table_name} when is_binary(table_name) ->
         {:table_name, {table_name, attrs}}
@@ -94,6 +94,13 @@ defmodule Factori.Variant do
       when is_binary(table_name) and is_atom(struct_module) and is_list(variant_attrs) ->
         attrs = Keyword.merge(variant_attrs, attrs || [])
         {:struct, {table_name, attrs, struct_module}}
+
+      nil ->
+        if variant_name && is_atom(variant_name) && function_exported?(variant_name, :__info__, 1) do
+          parse_arguments({variant_name, variant_name}, variant_name, attrs)
+        else
+          {:error, :undefined_variant}
+        end
 
       _ ->
         {:error, :undefined_variant}
