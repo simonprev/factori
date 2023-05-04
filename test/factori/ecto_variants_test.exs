@@ -1,6 +1,38 @@
 defmodule Factori.EctoVariantsTest do
   use Factori.EctoCase, async: true
 
+  describe "no variants" do
+    test "schema" do
+      create_table!(:users, [
+        {:add, :name, :string, [size: 1, null: true]}
+      ])
+
+      defmodule UserNoVariantsSchema do
+        use Ecto.Schema
+
+        schema "users" do
+          field(:name, :string)
+        end
+      end
+
+      defmodule UserNoVariantsFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [
+            fn
+              %{name: :name} -> "a"
+            end
+          ]
+      end
+
+      UserNoVariantsFactory.bootstrap()
+
+      user = UserNoVariantsFactory.insert(UserNoVariantsSchema)
+      assert user.__struct__ === UserNoVariantsSchema
+      assert user.name === "a"
+    end
+  end
+
   describe "variants" do
     test "schema" do
       create_table!(:users, [
