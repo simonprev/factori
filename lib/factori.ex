@@ -52,8 +52,11 @@ defmodule Factori do
               variants: [],
               mappings: [],
               options: []
+
+    @type t :: %__MODULE__{}
   end
 
+  @spec bootstrap(Factori.Config.t()) :: no_return()
   def bootstrap(factory_config) do
     Factori.Bootstrap.init(factory_config)
     Factori.Bootstrap.bootstrap(factory_config)

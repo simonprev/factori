@@ -15,6 +15,13 @@ defmodule Factori.Attributes do
     end
   end
 
+  @spec map(
+          Factori.Config.t(),
+          fun(),
+          String.t(),
+          Keyword.t(),
+          Factori.Bootstrap.ColumnDefinition.t()
+        ) :: {Keyword.t(), Keyword.t()}
   def map(config, insert_func, table_name, attrs, source_column) do
     columns =
       table_name

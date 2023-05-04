@@ -26,14 +26,17 @@ defmodule Factori.Bootstrap do
     @type t :: %__MODULE__{}
   end
 
-  def init(config = %Factori.Config{}), do: config.storage.init(config.storage_name)
+  @spec init(Factori.Config.t()) :: any()
+  def init(config), do: config.storage.init(config.storage_name)
 
+  @spec bootstrap(Factori.Config.t()) :: any()
   def bootstrap(config = %Factori.Config{}) do
     config.repo
     |> config.adapter.columns!()
     |> Enum.each(&config.storage.insert(&1, config.storage_name))
   end
 
+  @spec query!(module(), String.t()) :: list()
   def query!(repo, query) do
     result = Ecto.Adapters.SQL.query!(repo, query, [])
     result.rows

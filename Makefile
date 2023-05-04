@@ -55,3 +55,7 @@ lint: lint-elixir ## Lint project files
 lint-elixir:
 	mix compile --warnings-as-errors --force
 	mix credo --strict
+
+.PHONY: dialyzer
+dialyzer: ## Run Dialyzer on the code
+	mix dialyzer --format dialyxir
