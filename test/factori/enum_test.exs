@@ -20,7 +20,10 @@ defmodule Factori.EnumTest do
 
     test "simple override" do
       Factori.TestRepo.query!("CREATE TYPE simple_override_user_type AS ENUM ('admin', 'user')")
-      create_table!(:simple_override_users, [{:add, :type, :simple_override_user_type, [null: false]}])
+
+      create_table!(:simple_override_users, [
+        {:add, :type, :simple_override_user_type, [null: false]}
+      ])
 
       defmodule DbEnumUserOverrideFactory do
         use Factori,
