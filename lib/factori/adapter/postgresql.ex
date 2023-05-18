@@ -142,7 +142,9 @@ defmodule Factori.Adapter.Postgresql do
       |> Ecto.Enum.values(String.to_existing_atom(column_name))
       |> Enum.map(&to_string/1)
 
-    %{name: column_name, values: values}
+    mappings = Ecto.Enum.mappings(schema, String.to_existing_atom(column_name))
+
+    %Bootstrap.EnumDefinition{name: column_name, values: values, mappings: mappings}
   rescue
     ArgumentError -> []
   end

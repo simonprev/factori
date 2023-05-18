@@ -8,13 +8,13 @@ defmodule Factori do
     @impl true
     def message(%{name: name, variants: []}) do
       """
-      `#{inspect(name)}` is not a valid variant name. No variants were defined in your Factory module.
+      #{inspect(name)} is not a valid variant name. No variants were defined in your Factory module.
       """
     end
 
     def message(%{name: name, variants: variants}) do
       """
-      `#{inspect(name)}` is not a valid variant name.
+      #{inspect(name)} is not a valid variant name.
 
       Valid variants are:
       #{Enum.map_join(variants, "\n", fn variant -> inspect(elem(variant, 0)) end)}
@@ -28,7 +28,25 @@ defmodule Factori do
     @impl true
     def message(%{name: name}) do
       """
-      `#{inspect(name)}` is not a known table name.
+      #{inspect(name)} is not a known table name.
+      """
+    end
+  end
+
+  defmodule InvalidEnumError do
+    defexception [:action, :table_name, :name, :values, :value]
+
+    @impl true
+    def message(%{
+          action: action,
+          table_name: table_name,
+          name: name,
+          values: values,
+          value: value
+        }) do
+      """
+      Can't #{action} value for #{table_name}.#{name} field.
+      Expected any of: #{Enum.map_join(values, ", ", &inspect(&1))}. Got: #{inspect(to_string(value))}
       """
     end
   end
@@ -223,7 +241,7 @@ defmodule Factori do
 
   defp load_record_values(record, columns) do
     Enum.reduce(columns, record, fn column, record ->
-      Map.update(record, column.name, nil, &Factori.Ecto.load_value(&1, column.ecto_type))
+      Map.update(record, column.name, nil, &Factori.Ecto.load_value(&1, column))
     end)
   end
 

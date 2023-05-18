@@ -62,11 +62,11 @@ defmodule Factori.Attributes do
           end
 
         value = Keyword.get_lazy(attrs, column.name, new_value)
-        value = Factori.Ecto.dump_value(value, column.ecto_type)
+        value = Factori.Ecto.dump_value(value, column)
         [{column.name, value} | attrs]
       end)
 
-    {db_attrs, struct_attrs}
+    {Enum.uniq(db_attrs), Enum.uniq(struct_attrs)}
   end
 
   defp fetch_reference(config, insert_func, columns, attrs, column, source_column) do

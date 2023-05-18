@@ -7,6 +7,20 @@ defmodule Factori.TableNameTest do
         use Factori, repo: Factori.TestRepo
       end
 
+      UnknownFactory.bootstrap()
+
+      assert_raise Factori.UndefinedTableError, ~r/foo/, fn ->
+        UnknownFactory.insert("foo")
+      end
+    end
+
+    test "unknown" do
+      defmodule UnknownFactory do
+        use Factori, repo: Factori.TestRepo
+      end
+
+      UnknownFactory.bootstrap()
+
       assert_raise Factori.UndefinedTableError, ~r/foo/, fn ->
         UnknownFactory.insert("foo")
       end

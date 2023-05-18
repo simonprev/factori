@@ -1,6 +1,6 @@
 defmodule Factori.Bootstrap do
   defmodule EnumDefinition do
-    defstruct name: nil, values: []
+    defstruct name: nil, values: [], mappings: nil
 
     @type t :: %__MODULE__{}
   end
