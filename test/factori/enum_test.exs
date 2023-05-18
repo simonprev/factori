@@ -3,8 +3,8 @@ defmodule Factori.EnumTest do
 
   describe "enum" do
     test "simple" do
-      Factori.TestRepo.query!("CREATE TYPE user_type AS ENUM ('admin', 'user')")
-      create_table!(:users, [{:add, :type, :user_type, [null: false]}])
+      Factori.TestRepo.query!("CREATE TYPE simple_user_type AS ENUM ('admin', 'user')")
+      create_table!(:simple_users, [{:add, :type, :simple_user_type, [null: false]}])
 
       defmodule DbEnumUserFactory do
         use Factori,
@@ -14,13 +14,13 @@ defmodule Factori.EnumTest do
 
       DbEnumUserFactory.bootstrap()
 
-      user = DbEnumUserFactory.insert("users")
+      user = DbEnumUserFactory.insert("simple_users")
       assert user.type in ["admin", "user"]
     end
 
     test "simple override" do
-      Factori.TestRepo.query!("CREATE TYPE user_type AS ENUM ('admin', 'user')")
-      create_table!(:users, [{:add, :type, :user_type, [null: false]}])
+      Factori.TestRepo.query!("CREATE TYPE simple_override_user_type AS ENUM ('admin', 'user')")
+      create_table!(:simple_override_users, [{:add, :type, :simple_override_user_type, [null: false]}])
 
       defmodule DbEnumUserOverrideFactory do
         use Factori,
@@ -30,7 +30,7 @@ defmodule Factori.EnumTest do
 
       DbEnumUserOverrideFactory.bootstrap()
 
-      user = DbEnumUserOverrideFactory.insert("users", type: "admin")
+      user = DbEnumUserOverrideFactory.insert("simple_override_users", type: "admin")
       assert user.type === "admin"
     end
 
