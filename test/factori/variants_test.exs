@@ -61,6 +61,27 @@ defmodule Factori.VariantsTest do
       assert named.id === "3"
     end
 
+    test "invalid attribute" do
+      create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
+
+      defmodule UserInvalidOverrideFactory do
+        use Factori,
+          variants: [{:user, "users"}],
+          repo: Factori.TestRepo,
+          mappings: [
+            [match: fn %{name: :id} -> "1" end]
+          ]
+      end
+
+      UserInvalidOverrideFactory.bootstrap()
+
+      assert_raise Factori.InvalidAttributeError,
+                   ~r/attributes mapping contains invalid keys: \[:foo\]/,
+                   fn ->
+                     UserInvalidOverrideFactory.insert(:user, foo: "bar")
+                   end
+    end
+
     test "list name with override" do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 

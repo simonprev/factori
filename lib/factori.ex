@@ -68,6 +68,18 @@ defmodule Factori do
     end
   end
 
+  defmodule InvalidAttributeError do
+    defexception [:schema, :attributes]
+
+    @impl true
+    def message(%{schema: schema, attributes: attributes}) do
+      """
+
+      #{inspect(schema)} attributes mapping contains invalid keys: #{inspect(attributes)}.
+      """
+    end
+  end
+
   defmodule Config do
     defstruct storage_name: nil,
               storage: nil,

@@ -102,6 +102,41 @@ defmodule Factori.EctoVariantsTest do
       assert named.name === "override"
     end
 
+    test "schema unknown key" do
+      create_table!(:users, [
+        {:add, :id, :string, [size: 1, null: false]},
+        {:add, :name, :string, [size: 10, null: false]}
+      ])
+
+      defmodule UserUnknownOverrideSchema do
+        use Ecto.Schema
+
+        schema "users" do
+          field(:name, :string)
+        end
+      end
+
+      defmodule UserUnknownOverrideFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          variants: [{:user, UserUnknownOverrideSchema}],
+          mappings: [
+            fn
+              %{name: :id} -> "1"
+              %{name: :name} -> "foo"
+            end
+          ]
+      end
+
+      UserUnknownOverrideFactory.bootstrap()
+
+      assert_raise Factori.InvalidAttributeError,
+                   ~r/attributes mapping contains invalid keys: \[:foo\]/,
+                   fn ->
+                     UserUnknownOverrideFactory.insert(:user, foo: "bar")
+                   end
+    end
+
     test "schema virtual overrides" do
       create_table!(:users, [
         {:add, :id, :string, [size: 1, null: false]},

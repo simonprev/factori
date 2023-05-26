@@ -22,5 +22,6 @@ defmodule Factori.EctoCase do
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Factori.TestRepo)
+    Ecto.Adapters.SQL.Sandbox.mode(Factori.TestRepo, :manual)
   end
 end

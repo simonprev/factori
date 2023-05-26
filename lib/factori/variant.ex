@@ -2,9 +2,11 @@ defmodule Factori.Variant do
   def insert(config, variant, variant_name, attrs, source_column) do
     case parse_arguments(variant, variant_name, attrs) do
       {:table_name, {table_name, attrs}} ->
+        validate_table_attrs!(variant_name, table_name, attrs, config)
         Factori.insert(config, table_name, attrs, source_column)
 
       {:struct, {table_name, attrs, struct_module}} ->
+        validate_struct_attrs!(struct_module, attrs)
         Factori.insert(config, table_name, struct_module, attrs, source_column)
 
       {:error, {:invalid_schema, struct_module}} ->
@@ -18,9 +20,11 @@ defmodule Factori.Variant do
   def build(config, variant, variant_name, attrs, source_column) do
     case parse_arguments(variant, variant_name, attrs) do
       {:table_name, {table_name, attrs}} ->
+        validate_table_attrs!(variant_name, table_name, attrs, config)
         Factori.build(config, table_name, attrs, source_column)
 
       {:struct, {table_name, attrs, struct_module}} ->
+        validate_struct_attrs!(struct_module, attrs)
         Factori.build(config, table_name, struct_module, attrs, source_column)
 
       {:error, {:invalid_schema, struct_module}} ->
@@ -34,9 +38,11 @@ defmodule Factori.Variant do
   def insert_list(config, variant, variant_name, count, attrs, source_column) do
     case parse_arguments(variant, variant_name, attrs) do
       {:table_name, {table_name, attrs}} ->
+        validate_table_attrs!(variant_name, table_name, attrs, config)
         Factori.insert_list(config, table_name, count, attrs, source_column)
 
       {:struct, {table_name, attrs, struct_module}} ->
+        validate_struct_attrs!(struct_module, attrs)
         Factori.insert_list(config, table_name, count, struct_module, attrs, source_column)
 
       {:error, {:invalid_schema, struct_module}} ->
@@ -50,9 +56,11 @@ defmodule Factori.Variant do
   def seed(config, variant, variant_name, count, attrs, source_column) do
     case parse_arguments(variant, variant_name, attrs) do
       {:table_name, {table_name, attrs}} ->
+        validate_table_attrs!(variant_name, table_name, attrs, config)
         Factori.seed(config, table_name, count, attrs, source_column, nil)
 
       {:struct, {table_name, attrs, struct_module}} ->
+        validate_struct_attrs!(struct_module, attrs)
         Factori.seed(config, table_name, count, struct_module, attrs, source_column)
 
       {:error, {:invalid_schema, struct_module}} ->
@@ -61,6 +69,42 @@ defmodule Factori.Variant do
       {:error, :undefined_variant} ->
         raise Factori.UndefinedVariantError, name: variant_name, variants: config.variants
     end
+  end
+
+  defp validate_table_attrs!(variant_name, table_name, attrs, config) do
+    valid_attributes =
+      table_name
+      |> config.storage.get(config.storage_name)
+      |> Enum.map(& &1.name)
+
+    invalid_attrs =
+      attrs
+      |> List.wrap()
+      |> Enum.reject(fn {key, _} -> key in valid_attributes end)
+      |> Enum.map(fn {key, _} -> key end)
+
+    if Enum.any?(invalid_attrs) do
+      raise Factori.InvalidAttributeError, schema: variant_name, attributes: invalid_attrs
+    end
+
+    :ok
+  end
+
+  defp validate_struct_attrs!(struct_module, attrs) do
+    invalid_attrs =
+      attrs
+      |> List.wrap()
+      |> Enum.reject(fn {key, value} ->
+        binded_struct = struct(struct_module, [{key, value}])
+        Map.has_key?(binded_struct, key)
+      end)
+      |> Enum.map(fn {key, _} -> key end)
+
+    if Enum.any?(invalid_attrs) do
+      raise Factori.InvalidAttributeError, schema: struct_module, attributes: invalid_attrs
+    end
+
+    :ok
   end
 
   defp parse_arguments(variant, variant_name, attrs) do
