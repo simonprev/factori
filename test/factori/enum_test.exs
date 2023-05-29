@@ -66,9 +66,11 @@ defmodule Factori.EnumTest do
 
       EctoEnumUserVariantDumpFactory.bootstrap()
 
-      assert_raise Factori.InvalidEnumError, ~r/Can't dump value for users.type/, fn ->
-        EctoEnumUserVariantDumpFactory.insert(:admin)
-      end
+      assert_raise Ecto.ChangeError,
+                   ~r/value `:foo` for `UserEnumSchema.type` in `insert_all` does not match type/,
+                   fn ->
+                     EctoEnumUserVariantDumpFactory.insert(:admin)
+                   end
     end
 
     test "from schema ecto enum on variant override" do

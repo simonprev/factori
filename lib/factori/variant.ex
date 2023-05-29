@@ -153,7 +153,7 @@ defmodule Factori.Variant do
 
   # To ensure that the schema is valid, we call the __schema__ instrospection function declared by Ecto.Schema
   # We can’t use reliably function_exported?/3 since the struct_module is sometimes not loaded yet.
-  defp struct_module_source!(struct_module) do
+  def struct_module_source!(struct_module) do
     struct_module.__schema__(:source)
   rescue
     UndefinedFunctionError -> nil

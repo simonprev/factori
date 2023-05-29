@@ -20,9 +20,10 @@ defmodule Factori.Attributes do
           fun(),
           String.t(),
           Keyword.t(),
-          Factori.Bootstrap.ColumnDefinition.t()
+          Factori.Bootstrap.ColumnDefinition.t(),
+          boolean()
         ) :: {Keyword.t(), Keyword.t()}
-  def map(config, insert_func, table_name, attrs, source_column) do
+  def map(config, insert_func, table_name, attrs, source_column, ecto_dump_value?) do
     columns =
       table_name
       |> config.storage.get(config.storage_name)
@@ -62,8 +63,8 @@ defmodule Factori.Attributes do
           end
 
         value = Keyword.get_lazy(attrs, column.name, new_value)
-        value = Factori.Ecto.dump_value(value, column)
-        [{column.name, value} | attrs]
+        value = if ecto_dump_value?, do: Factori.Ecto.dump_value(value, column), else: value
+        Keyword.put(attrs, column.name, value)
       end)
 
     {Enum.uniq(db_attrs), Enum.uniq(struct_attrs)}

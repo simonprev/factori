@@ -4,6 +4,7 @@ defmodule UserEnumSchema do
   # module is registered in :application.get_key(otp_app, :modules)
   use Ecto.Schema
 
+  @primary_key false
   schema "users" do
     field(:type, Ecto.Enum, values: [:admin, :user])
   end

@@ -10,6 +10,7 @@ defmodule Factori.TypedEctoSchemaTest do
     defmodule UserSchema do
       use TypedEctoSchema
 
+      @primary_key {:id, :string, []}
       typed_schema "users" do
         field(:name, :string)
       end

@@ -2,6 +2,8 @@ defmodule Factori do
   alias Factori.Attributes
   alias Factori.Variant
 
+  @insert_all_chunk 1000
+
   defmodule UndefinedVariantError do
     defexception [:name, :variants]
 
@@ -114,9 +116,27 @@ defmodule Factori do
 
   def insert_list(config, table_name, count, struct_module, attrs, source_column)
       when is_atom(struct_module) and not is_nil(struct_module) do
-    data = insert_list(config, table_name, count, attrs, source_column, struct_module)
+    if Variant.struct_module_source!(struct_module) do
+      ensure_valid_table_name!(config, table_name)
 
-    Enum.map(data, &struct(struct_module, &1))
+      data =
+        for _ <- 1..count,
+            into: [],
+            do: map_attributes(config, table_name, attrs, source_column, false)
+
+      db_attrs = Enum.map(data, &elem(&1, 0))
+
+      config
+      |> insert_all_struct(struct_module, db_attrs)
+      |> Enum.zip(data)
+      |> Enum.map(fn {row, {_, struct_attrs}} ->
+        Map.merge(row, Enum.into(struct_attrs, %{}))
+      end)
+    else
+      data = insert_list(config, table_name, count, attrs, source_column, struct_module)
+
+      Enum.map(data, &struct(struct_module, &1))
+    end
   end
 
   def insert_list(config, table_name, count, attrs, source_column, _) do
@@ -146,10 +166,19 @@ defmodule Factori do
 
   def insert(config, table_name, struct_module, attrs, source_column)
       when is_atom(struct_module) and not is_nil(struct_module) do
-    struct(
-      struct_module,
-      insert(config, table_name, attrs, source_column, struct_module)
-    )
+    if Variant.struct_module_source!(struct_module) do
+      ensure_valid_table_name!(config, table_name)
+
+      {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column, false)
+      data = hd(insert_all_struct(config, struct_module, [db_attrs]))
+
+      Map.merge(data, Enum.into(struct_attrs, %{}))
+    else
+      struct(
+        struct_module,
+        insert(config, table_name, attrs, source_column)
+      )
+    end
   end
 
   def insert(config, table_name, attrs, source_column, _) do
@@ -204,7 +233,7 @@ defmodule Factori do
 
     data
     |> Enum.map(&elem(&1, 0))
-    |> Stream.chunk_every(1000)
+    |> Stream.chunk_every(@insert_all_chunk)
     |> Task.async_stream(
       &config.repo.insert_all(table_name, &1, caller: parent, returning: false),
       ordered: false
@@ -220,14 +249,29 @@ defmodule Factori do
     end
   end
 
-  defp map_attributes(config, table_name, attrs, source_column) do
+  defp map_attributes(config, table_name, attrs, source_column, ecto_dump_value? \\ true) do
     Attributes.map(
       config,
       &insert/5,
       table_name,
       List.wrap(attrs),
-      source_column
+      source_column,
+      ecto_dump_value?
     )
+  end
+
+  defp insert_all_struct(config, struct, attrs) do
+    attrs
+    |> Enum.chunk_every(@insert_all_chunk)
+    |> Enum.flat_map(fn attrs ->
+      case config.repo.insert_all(struct, attrs, returning: true) do
+        {_, records} ->
+          records
+
+        _ ->
+          []
+      end
+    end)
   end
 
   defp insert_all(config, table_name, attrs) do
@@ -235,7 +279,7 @@ defmodule Factori do
     returning = Enum.map(columns, & &1.name)
 
     attrs
-    |> Enum.chunk_every(1000)
+    |> Enum.chunk_every(@insert_all_chunk)
     |> Enum.flat_map(fn attrs ->
       case config.repo.insert_all(table_name, attrs, returning: returning) do
         {_, records} ->

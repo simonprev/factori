@@ -10,6 +10,7 @@ defmodule Factori.EctoVariantsTest do
       defmodule UserNoVariantsSchema do
         use Ecto.Schema
 
+        @primary_key false
         schema "users" do
           field(:name, :string)
         end
@@ -43,6 +44,7 @@ defmodule Factori.EctoVariantsTest do
       defmodule UserSchema do
         use Ecto.Schema
 
+        @primary_key {:id, :string, []}
         schema "users" do
           field(:name, :string)
         end
@@ -68,6 +70,41 @@ defmodule Factori.EctoVariantsTest do
       assert named.name === "foo"
     end
 
+    test "insert list schema overrides" do
+      create_table!(:users, [
+        {:add, :id, :string, [size: 1, null: false]},
+        {:add, :name, :string, [size: 10, null: false]}
+      ])
+
+      defmodule UserListOverrideSchema do
+        use Ecto.Schema
+
+        @primary_key {:id, :string, []}
+        schema "users" do
+          field(:name, :string)
+        end
+      end
+
+      defmodule UserListOverrideFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          variants: [{:user, UserListOverrideSchema, name: "override"}],
+          mappings: [
+            fn
+              %{name: :id} -> "1"
+              %{name: :name} -> "foo"
+            end
+          ]
+      end
+
+      UserListOverrideFactory.bootstrap()
+
+      [named | _] = UserListOverrideFactory.insert_list(:user, 10)
+      assert named.__struct__ === UserListOverrideSchema
+      assert named.id === "1"
+      assert named.name === "override"
+    end
+
     test "schema overrides" do
       create_table!(:users, [
         {:add, :id, :string, [size: 1, null: false]},
@@ -77,6 +114,7 @@ defmodule Factori.EctoVariantsTest do
       defmodule UserOverrideSchema do
         use Ecto.Schema
 
+        @primary_key {:id, :string, []}
         schema "users" do
           field(:name, :string)
         end
@@ -111,6 +149,7 @@ defmodule Factori.EctoVariantsTest do
       defmodule UserUnknownOverrideSchema do
         use Ecto.Schema
 
+        @primary_key {:id, :string, []}
         schema "users" do
           field(:name, :string)
         end
@@ -146,6 +185,7 @@ defmodule Factori.EctoVariantsTest do
       defmodule UserVirtualOverrideSchema do
         use Ecto.Schema
 
+        @primary_key {:id, :string, []}
         schema "users" do
           field(:name, :string)
           field(:admin?, :boolean, virtual: true)
