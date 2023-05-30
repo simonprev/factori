@@ -53,6 +53,23 @@ defmodule Factori.EnumTest do
       assert user.type in [:admin, :user]
     end
 
+    test "from schema ecto variant enum" do
+      Code.ensure_compiled!(UserEnumSchema)
+      create_table!(:users, [{:add, :type, :string, [null: false]}])
+
+      defmodule EctoEnumVariantUserFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [Factori.Mapping.Enum],
+          variants: [{:user, UserEnumSchema}]
+      end
+
+      EctoEnumVariantUserFactory.bootstrap()
+
+      user = EctoEnumVariantUserFactory.insert(:user)
+      assert user.type in [:admin, :user]
+    end
+
     test "from schema ecto enum on variant invalid dump" do
       Code.ensure_compiled!(UserEnumSchema)
       create_table!(:users, [{:add, :type, :string, [null: false]}])
