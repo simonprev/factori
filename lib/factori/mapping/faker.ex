@@ -7,6 +7,7 @@ defmodule Factori.Mapping.Faker do
     serial: 1..2_147_483_647,
     bigserial: 1..9_223_372_036_854_775_807
   }
+  @timestamps ~w(inserted_at updated_at)
 
   alias Faker.Lorem
 
@@ -24,12 +25,28 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "text"}), do: Lorem.paragraph(5)
   def match(%{type: "time"}), do: time()
   def match(%{type: "date"}), do: date()
-  def match(%{type: "timestamp"}), do: timestamp()
-  def match(%{type: "timestampz"}), do: timestamp()
   def match(%{type: "char", options: options}), do: varchar(options)
   def match(%{type: "bytea", options: options}), do: varchar(options)
   def match(%{type: "varchar", name: "email"}), do: Faker.Internet.email()
   def match(%{type: "varchar", name: "phone_number"}), do: Faker.Phone.EnUs.phone()
+
+  def match(%{type: "timestamp", name: name, ecto_type: :utc_datetime}) when name in @timestamps,
+    do: DateTime.truncate(DateTime.utc_now(), :second)
+
+  def match(%{type: "timestamp", ecto_type: :utc_datetime}),
+    do: DateTime.truncate(timestamp(), :second)
+
+  def match(%{type: "timestamp", name: name}) when name in @timestamps, do: DateTime.utc_now()
+  def match(%{type: "timestamp"}), do: timestamp()
+
+  def match(%{type: "timestampz", name: name, ecto_type: :utc_datetime}) when name in @timestamps,
+    do: DateTime.truncate(timestamp(), :second)
+
+  def match(%{type: "timestampz", ecto_type: :utc_datetime}),
+    do: DateTime.truncate(timestamp(), :second)
+
+  def match(%{type: "timestampz", name: name}) when name in @timestamps, do: DateTime.utc_now()
+  def match(%{type: "timestampz"}), do: timestamp()
 
   def match(%{type: "varchar", name: name, options: options}) do
     if String.ends_with?(to_string(name), "_id") do
@@ -39,7 +56,14 @@ defmodule Factori.Mapping.Faker do
     end
   end
 
-  def transform(_, value), do: value
+  def transform(%{ecto_type: :utc_datetime_usec}, value), do: DateTime.add(value, 0, :microsecond)
+  def transform(%{ecto_type: :utc_datetime}, value), do: DateTime.truncate(value, :second)
+
+  def transform(_, value) do
+    value
+  end
+
+  # def transform(_, value), do: value
 
   defp readable_varchar(options) do
     max_size = options[:size] || 255

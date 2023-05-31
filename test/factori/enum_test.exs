@@ -50,7 +50,7 @@ defmodule Factori.EnumTest do
       EctoEnumUserFactory.bootstrap()
 
       user = EctoEnumUserFactory.insert("users")
-      assert user.type in [:admin, :user]
+      assert user.type in ["admin", "user"]
     end
 
     test "from schema ecto variant enum" do

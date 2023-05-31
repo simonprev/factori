@@ -63,6 +63,7 @@ defmodule Factori.Attributes do
           end
 
         value = Keyword.get_lazy(attrs, column.name, new_value)
+        value = Enum.reduce(config.mappings, value, &find_transformed_value(&1, column, &2))
         value = if ecto_dump_value?, do: Factori.Ecto.dump_value(value, column), else: value
         Keyword.put(attrs, column.name, value)
       end)

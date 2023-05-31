@@ -44,9 +44,8 @@ defmodule Factori.Adapter.Postgresql do
 
   def columns!(repo) do
     references = reference_definitions(repo)
+    ecto_schemas = ecto_schemas(repo)
     db_enums = enums_definitions(repo)
-
-    schemas = schemas(repo)
 
     repo
     |> Bootstrap.query!(@columns)
@@ -55,11 +54,47 @@ defmodule Factori.Adapter.Postgresql do
       references = Map.get(references, table_name, [])
 
       ecto_schema =
-        Enum.find_value(schemas, fn {module, table} -> table == table_name && module end)
+        Enum.find_value(ecto_schemas, fn {module, table} -> table == table_name && module end)
+
+      fields = List.wrap(ecto_schema && ecto_schema.__schema__(:fields))
 
       columns =
         columns
-        |> Enum.map(&generate_column_definition(references, ecto_schema, db_enums, &1))
+        |> Enum.map(fn [_table, name | _] = column ->
+          ecto_enum =
+            with schema when not is_nil(schema) <- ecto_schema,
+                 identifier = String.to_atom(name),
+                 true <- identifier in fields,
+                 {:parameterized, Ecto.Enum, _} <- ecto_schema.__schema__(:type, identifier) do
+              %Bootstrap.EnumDefinition{
+                name: name,
+                mappings: Ecto.Enum.mappings(ecto_schema, identifier)
+              }
+            else
+              _ -> nil
+            end
+
+          db_enums =
+            if ecto_enum do
+              db_enums
+              |> Enum.reject(&(&1.name === ecto_enum.name))
+              |> Enum.concat([ecto_enum])
+            else
+              db_enums
+            end
+
+          ecto_type =
+            with schema when not is_nil(schema) <- ecto_schema,
+                 identifier = String.to_atom(name),
+                 true <- identifier in fields,
+                 type when is_atom(type) <- ecto_schema.__schema__(:type, identifier) do
+              type
+            else
+              _ -> nil
+            end
+
+          generate_column_definition(references, db_enums, column, ecto_schema, ecto_type)
+        end)
         |> Enum.group_by(& &1.name)
         |> Enum.map(fn {name, [definition]} -> {name, definition} end)
         |> Enum.into(%{})
@@ -76,7 +111,7 @@ defmodule Factori.Adapter.Postgresql do
     |> Enum.map(fn {enum_value, enum_labels} ->
       %Bootstrap.EnumDefinition{
         name: enum_value,
-        values: enum_labels
+        mappings: Enum.map(enum_labels, &{String.to_atom(&1), &1})
       }
     end)
   end
@@ -95,14 +130,20 @@ defmodule Factori.Adapter.Postgresql do
     |> Enum.group_by(& &1.source)
   end
 
-  defp generate_column_definition(references, schema, db_enums, [
-         table_name,
-         name,
-         type,
-         null,
-         generated,
-         size
-       ]) do
+  defp generate_column_definition(
+         references,
+         db_enums,
+         [
+           table_name,
+           name,
+           type,
+           null,
+           generated,
+           size
+         ],
+         ecto_schema,
+         ecto_type
+       ) do
     identifier = String.to_atom(name)
 
     reference =
@@ -113,21 +154,18 @@ defmodule Factori.Adapter.Postgresql do
         _ -> nil
       end
 
-    enums =
-      db_enums
-      |> Enum.find(&(&1.name === type))
-      |> case do
-        nil -> enum_mappings(schema, name)
-        v -> v
-      end
+    enum = Enum.find(db_enums, &(&1.name === type || &1.name === name))
+
+    ecto_type = if type === "uuid", do: Ecto.UUID, else: ecto_type
 
     %Bootstrap.ColumnDefinition{
       table_name: table_name,
       name: identifier,
       type: type,
-      ecto_type: Factori.Ecto.to_ecto_type(type),
+      ecto_type: ecto_type,
+      ecto_schema: ecto_schema,
       reference: reference,
-      enum: enums,
+      enum: enum,
       options: %{
         null: null === "YES",
         ignore: generated === "ALWAYS",
@@ -136,25 +174,18 @@ defmodule Factori.Adapter.Postgresql do
     }
   end
 
-  defp enum_mappings(schema, column_name) do
-    values =
-      schema
-      |> Ecto.Enum.values(String.to_existing_atom(column_name))
-      |> Enum.map(&to_string/1)
-
-    mappings = Ecto.Enum.mappings(schema, String.to_existing_atom(column_name))
-
-    %Bootstrap.EnumDefinition{name: column_name, values: values, mappings: mappings}
-  rescue
-    ArgumentError -> []
-  end
-
-  defp schemas(repo) do
+  defp ecto_schemas(repo) do
     otp_app = Keyword.get(repo.config, :otp_app)
     {:ok, modules} = :application.get_key(otp_app, :modules)
 
     modules
-    |> Enum.filter(&function_exported?(&1, :__schema__, 1))
-    |> Enum.map(&{&1, &1.__schema__(:source)})
+    |> Enum.map(&{&1, schema_module_source(&1)})
+    |> Enum.reject(fn {_, source} -> is_nil(source) end)
+  end
+
+  def schema_module_source(struct_module) do
+    struct_module.__schema__(:source)
+  rescue
+    UndefinedFunctionError -> nil
   end
 end

@@ -35,24 +35,6 @@ defmodule Factori do
     end
   end
 
-  defmodule InvalidEnumError do
-    defexception [:action, :table_name, :name, :values, :value]
-
-    @impl true
-    def message(%{
-          action: action,
-          table_name: table_name,
-          name: name,
-          values: values,
-          value: value
-        }) do
-      """
-      Can't #{action} value for #{table_name}.#{name} field.
-      Expected any of: #{Enum.map_join(values, ", ", &inspect(&1))}. Got: #{inspect(to_string(value))}
-      """
-    end
-  end
-
   defmodule Options do
     defstruct nil_probability: 0.5
   end
@@ -199,10 +181,17 @@ defmodule Factori do
 
   def build(config, table_name, struct_module, attrs, source_column)
       when is_atom(struct_module) and not is_nil(struct_module) do
-    struct(
-      struct_module,
-      build(config, table_name, attrs, source_column, struct_module)
-    )
+    if Variant.struct_module_source!(struct_module) do
+      ensure_valid_table_name!(config, table_name)
+
+      {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column, false)
+      Map.merge(Enum.into(db_attrs, %{}), Enum.into(struct_attrs, %{}))
+    else
+      struct(
+        struct_module,
+        build(config, table_name, attrs, source_column, struct_module)
+      )
+    end
   end
 
   def build(config, table_name, attrs, source_column, _) do

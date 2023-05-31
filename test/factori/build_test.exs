@@ -97,6 +97,28 @@ defmodule Factori.BuildTest do
       assert named.id === "3"
     end
 
+    test "ecto" do
+      create_table!(:users, [
+        {:add, :id, :string, [size: 1, null: false]},
+        {:add, :type, :string, [null: false]}
+      ])
+
+      defmodule UserEctoFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          variants: [{:user, UserEnumSchema}],
+          mappings: [
+            Factori.Mapping.Enum,
+            [match: fn %{name: :id} -> "1" end]
+          ]
+      end
+
+      UserEctoFactory.bootstrap()
+
+      named = UserEctoFactory.build(:user)
+      assert named.type in ~w(admin user)a
+    end
+
     test "do not persist" do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 

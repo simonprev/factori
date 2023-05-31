@@ -1,6 +1,6 @@
 defmodule Factori.Bootstrap do
   defmodule EnumDefinition do
-    defstruct name: nil, values: [], mappings: nil
+    defstruct name: nil, mappings: []
 
     @type t :: %__MODULE__{}
   end
@@ -20,6 +20,7 @@ defmodule Factori.Bootstrap do
               type: nil,
               options: %{},
               ecto_type: nil,
+              ecto_schema: nil,
               reference: nil,
               enum: nil
 
