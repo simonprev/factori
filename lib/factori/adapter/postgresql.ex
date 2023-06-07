@@ -56,45 +56,9 @@ defmodule Factori.Adapter.Postgresql do
       ecto_schema =
         Enum.find_value(ecto_schemas, fn {module, table} -> table == table_name && module end)
 
-      fields = List.wrap(ecto_schema && ecto_schema.__schema__(:fields))
-
       columns =
         columns
-        |> Enum.map(fn [_table, name | _] = column ->
-          ecto_enum =
-            with schema when not is_nil(schema) <- ecto_schema,
-                 identifier = String.to_atom(name),
-                 true <- identifier in fields,
-                 {:parameterized, Ecto.Enum, _} <- ecto_schema.__schema__(:type, identifier) do
-              %Bootstrap.EnumDefinition{
-                name: name,
-                mappings: Ecto.Enum.mappings(ecto_schema, identifier)
-              }
-            else
-              _ -> nil
-            end
-
-          db_enums =
-            if ecto_enum do
-              db_enums
-              |> Enum.reject(&(&1.name === ecto_enum.name))
-              |> Enum.concat([ecto_enum])
-            else
-              db_enums
-            end
-
-          ecto_type =
-            with schema when not is_nil(schema) <- ecto_schema,
-                 identifier = String.to_atom(name),
-                 true <- identifier in fields,
-                 type when is_atom(type) <- ecto_schema.__schema__(:type, identifier) do
-              type
-            else
-              _ -> nil
-            end
-
-          generate_column_definition(references, db_enums, column, ecto_schema, ecto_type)
-        end)
+        |> Enum.map(&generate_column_definition(&1, references, db_enums, ecto_schema))
         |> Enum.group_by(& &1.name)
         |> Enum.map(fn {name, [definition]} -> {name, definition} end)
         |> Enum.into(%{})
@@ -130,21 +94,55 @@ defmodule Factori.Adapter.Postgresql do
     |> Enum.group_by(& &1.source)
   end
 
-  defp generate_column_definition(
-         references,
-         db_enums,
-         [
-           table_name,
-           name,
-           type,
-           null,
-           generated,
-           size
-         ],
-         ecto_schema,
-         ecto_type
-       ) do
+  defp generate_column_definition(column, references, db_enums, ecto_schema) do
+    [table_name, name, type, null, generated, size] = column
+    fields = List.wrap(ecto_schema && ecto_schema.__schema__(:fields))
+    embeds = List.wrap(ecto_schema && ecto_schema.__schema__(:embeds))
     identifier = String.to_atom(name)
+
+    ecto_enum =
+      with schema when not is_nil(schema) <- ecto_schema,
+           true <- identifier in fields,
+           {:parameterized, Ecto.Enum, _} <- ecto_schema.__schema__(:type, identifier) do
+        %Bootstrap.EnumDefinition{
+          name: name,
+          mappings: Ecto.Enum.mappings(ecto_schema, identifier)
+        }
+      else
+        _ -> nil
+      end
+
+    db_enums =
+      if ecto_enum do
+        db_enums
+        |> Enum.reject(&(&1.name === ecto_enum.name))
+        |> Enum.concat([ecto_enum])
+      else
+        db_enums
+      end
+
+    ecto_embed =
+      with schema when not is_nil(schema) <- ecto_schema,
+           true <- identifier in embeds,
+           %Ecto.Embedded{cardinality: cardinality, related: related} <-
+             ecto_schema.__schema__(:embed, identifier) do
+        %Bootstrap.EmbedDefinition{
+          name: name,
+          cardinality: cardinality,
+          ecto_schema: related
+        }
+      else
+        _ -> nil
+      end
+
+    ecto_type =
+      with schema when not is_nil(schema) <- ecto_schema,
+           true <- identifier in fields,
+           type when is_atom(type) <- ecto_schema.__schema__(:type, identifier) do
+        type
+      else
+        _ -> nil
+      end
 
     reference =
       case Enum.find(references, fn reference ->
@@ -155,7 +153,6 @@ defmodule Factori.Adapter.Postgresql do
       end
 
     enum = Enum.find(db_enums, &(&1.name === type || &1.name === name))
-
     ecto_type = if type === "uuid", do: Ecto.UUID, else: ecto_type
 
     %Bootstrap.ColumnDefinition{
@@ -164,6 +161,7 @@ defmodule Factori.Adapter.Postgresql do
       type: type,
       ecto_type: ecto_type,
       ecto_schema: ecto_schema,
+      struct_embed: generate_embed_columns(table_name, ecto_embed),
       reference: reference,
       enum: enum,
       options: %{
@@ -172,6 +170,54 @@ defmodule Factori.Adapter.Postgresql do
         size: size
       }
     }
+  end
+
+  defp generate_embed_columns(_, nil), do: nil
+
+  defp generate_embed_columns(table_name, ecto_embed) do
+    fields =
+      for field <- ecto_embed.ecto_schema.__schema__(:fields) do
+        name = to_string(field)
+        type = ecto_type_to_embed_value_type(ecto_embed.ecto_schema.__schema__(:type, field))
+        nullable = "NO"
+        generated = "NO"
+        size = nil
+
+        column = [
+          table_name,
+          name,
+          type,
+          nullable,
+          generated,
+          size
+        ]
+
+        generate_column_definition(column, [], [], ecto_embed.ecto_schema)
+      end
+
+    {ecto_embed.cardinality, ecto_embed.ecto_schema, fields}
+  end
+
+  defp ecto_type_to_embed_value_type(type) do
+    case type do
+      Ecto.UUID -> "uuid"
+      :utc_datetime -> "timestamp"
+      :naive_datetime -> "timestamp"
+      :utc_datetime_usec -> "timestamp"
+      :naive_datetime_usec -> "timestamp"
+      :boolean -> "boolean"
+      :float -> "float4"
+      :time -> "time"
+      :date -> "date"
+      :string -> "varchar"
+      :integer -> "int8"
+      :binary_id -> "varchar"
+      :decimal -> "float4"
+      {:array, _} -> "array"
+      {:map, _} -> "jsonb"
+      :map -> "jsonb"
+      _ -> "varchar"
+    end
   end
 
   defp ecto_schemas(repo) do

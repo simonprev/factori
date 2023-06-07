@@ -39,7 +39,7 @@ defmodule Factori.EnumTest do
 
     test "from schema ecto enum" do
       Code.ensure_compiled!(UserEnumSchema)
-      create_table!(:users, [{:add, :type, :string, [null: false]}])
+      create_table!(:users_enum, [{:add, :type, :string, [null: false]}])
 
       defmodule EctoEnumUserFactory do
         use Factori,
@@ -49,13 +49,13 @@ defmodule Factori.EnumTest do
 
       EctoEnumUserFactory.bootstrap()
 
-      user = EctoEnumUserFactory.insert("users")
+      user = EctoEnumUserFactory.insert("users_enum")
       assert user.type in ["admin", "user"]
     end
 
     test "from schema ecto variant enum" do
       Code.ensure_compiled!(UserEnumSchema)
-      create_table!(:users, [{:add, :type, :string, [null: false]}])
+      create_table!(:users_enum, [{:add, :type, :string, [null: false]}])
 
       defmodule EctoEnumVariantUserFactory do
         use Factori,
@@ -72,7 +72,7 @@ defmodule Factori.EnumTest do
 
     test "from schema ecto enum on variant invalid dump" do
       Code.ensure_compiled!(UserEnumSchema)
-      create_table!(:users, [{:add, :type, :string, [null: false]}])
+      create_table!(:users_enum, [{:add, :type, :string, [null: false]}])
 
       defmodule EctoEnumUserVariantDumpFactory do
         use Factori,
@@ -92,7 +92,7 @@ defmodule Factori.EnumTest do
 
     test "from schema ecto enum on variant override" do
       Code.ensure_compiled!(UserEnumSchema)
-      create_table!(:users, [{:add, :type, :string, [null: false]}])
+      create_table!(:users_enum, [{:add, :type, :string, [null: false]}])
 
       defmodule EctoEnumUserVariantFactory do
         use Factori,

@@ -5,7 +5,7 @@ defmodule UserEnumSchema do
   use Ecto.Schema
 
   @primary_key false
-  schema "users" do
+  schema "users_enum" do
     field(:type, Ecto.Enum, values: [:admin, :user])
   end
 end

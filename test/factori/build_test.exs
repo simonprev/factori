@@ -98,7 +98,9 @@ defmodule Factori.BuildTest do
     end
 
     test "ecto" do
-      create_table!(:users, [
+      Code.ensure_compiled!(UserEnumSchema)
+
+      create_table!(:users_enum, [
         {:add, :id, :string, [size: 1, null: false]},
         {:add, :type, :string, [null: false]}
       ])

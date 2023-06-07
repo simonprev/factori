@@ -70,6 +70,29 @@ defmodule Factori.EctoVariantsTest do
       assert named.name === "foo"
     end
 
+    test "datetimes faker" do
+      Code.ensure_compiled!(UserDateTimeSchema)
+
+      create_table!(:users_datetime, [
+        {:add, :inserted_at, :utc_datetime, [null: false]},
+        {:add, :usec_inserted_at, :utc_datetime_usec, [null: false]}
+      ])
+
+      defmodule UserDateTimeFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          variants: [{:user, UserDateTimeSchema}],
+          mappings: [Factori.Mapping.Faker]
+      end
+
+      UserDateTimeFactory.bootstrap()
+
+      user = UserDateTimeFactory.insert(:user)
+      assert user.__struct__ === UserDateTimeSchema
+      assert is_struct(user.inserted_at, DateTime)
+      assert is_struct(user.usec_inserted_at, DateTime)
+    end
+
     test "insert list schema overrides" do
       create_table!(:users, [
         {:add, :id, :string, [size: 1, null: false]},

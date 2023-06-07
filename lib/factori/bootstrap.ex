@@ -5,6 +5,12 @@ defmodule Factori.Bootstrap do
     @type t :: %__MODULE__{}
   end
 
+  defmodule EmbedDefinition do
+    defstruct name: nil, ecto_schema: nil, cardinality: nil
+
+    @type t :: %__MODULE__{}
+  end
+
   defmodule ReferenceDefinition do
     defstruct target: nil,
               target_column: nil,
@@ -21,6 +27,7 @@ defmodule Factori.Bootstrap do
               options: %{},
               ecto_type: nil,
               ecto_schema: nil,
+              struct_embed: nil,
               reference: nil,
               enum: nil
 

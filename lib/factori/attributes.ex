@@ -44,7 +44,7 @@ defmodule Factori.Attributes do
             fn ->
               value_mapping =
                 Enum.find_value(config.mappings, fn mapping ->
-                  value = find_mapping_value(mapping, column, config.options)
+                  value = find_mapping_value(config.mappings, mapping, column, config.options)
                   value !== :not_found && {:ok, value}
                 end)
 
@@ -118,20 +118,51 @@ defmodule Factori.Attributes do
       else: value
   end
 
-  defp find_mapping_value(mapping, column, options) when is_list(mapping) do
-    maybe_nil(column, options, fn -> mapping[:match].(column) end)
+  defp find_attributes_mapping(mappings, columns, options) do
+    for column <- columns, into: %{} do
+      value_mapping =
+        Enum.find_value(mappings, fn mapping ->
+          value = find_mapping_value(mappings, mapping, column, options)
+          value !== :not_found && value
+        end)
+
+      {column.name, value_mapping}
+    end
+  end
+
+  defp maybe_nested_mapping(mappings, options, value) do
+    case value do
+      {:map, embed_schema, columns} ->
+        attributes = find_attributes_mapping(mappings, columns, options)
+        struct(embed_schema, attributes)
+
+      {:list, embed_schema, columns} ->
+        attributes = find_attributes_mapping(mappings, columns, options)
+        [struct(embed_schema, attributes)]
+
+      value ->
+        value
+    end
+  end
+
+  defp find_mapping_value(mappings, mapping, column, options) when is_list(mapping) do
+    maybe_nil(column, options, fn ->
+      maybe_nested_mapping(mappings, options, mapping[:match].(column))
+    end)
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp find_mapping_value(mapping, column, options) when is_function(mapping) do
-    maybe_nil(column, options, fn -> mapping.(column) end)
+  defp find_mapping_value(mappings, mapping, column, options) when is_function(mapping) do
+    maybe_nil(column, options, fn -> maybe_nested_mapping(mappings, options, mapping.(column)) end)
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp find_mapping_value(module, column, options) when is_atom(module) do
-    maybe_nil(column, options, fn -> module.match(column) end)
+  defp find_mapping_value(mappings, module, column, options) when is_atom(module) do
+    maybe_nil(column, options, fn ->
+      maybe_nested_mapping(mappings, options, module.match(column))
+    end)
   rescue
     FunctionClauseError -> :not_found
   end

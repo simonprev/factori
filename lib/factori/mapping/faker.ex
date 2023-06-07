@@ -7,11 +7,12 @@ defmodule Factori.Mapping.Faker do
     serial: 1..2_147_483_647,
     bigserial: 1..9_223_372_036_854_775_807
   }
-  @timestamps ~w(inserted_at updated_at)
+  @timestamps ~w(inserted_at updated_at)a
 
   alias Faker.Lorem
 
   def match(%{type: "uuid"}), do: Ecto.UUID.generate()
+  def match(%{type: "array"}), do: []
   def match(%{type: "json"}), do: %{}
   def match(%{type: "jsonb"}), do: %{}
   def match(%{type: "int2"}), do: Enum.random(@ranges.smallint)
@@ -27,8 +28,8 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "date"}), do: date()
   def match(%{type: "char", options: options}), do: varchar(options)
   def match(%{type: "bytea", options: options}), do: varchar(options)
-  def match(%{type: "varchar", name: "email"}), do: Faker.Internet.email()
-  def match(%{type: "varchar", name: "phone_number"}), do: Faker.Phone.EnUs.phone()
+  def match(%{type: "varchar", name: :email}), do: Faker.Internet.email()
+  def match(%{type: "varchar", name: :phone_number}), do: Faker.Phone.EnUs.phone()
 
   def match(%{type: "timestamp", name: name, ecto_type: :utc_datetime}) when name in @timestamps,
     do: DateTime.truncate(DateTime.utc_now(), :second)
@@ -59,7 +60,7 @@ defmodule Factori.Mapping.Faker do
   def transform(%{ecto_type: :utc_datetime_usec}, value), do: DateTime.add(value, 0, :microsecond)
   def transform(%{ecto_type: :utc_datetime}, value), do: DateTime.truncate(value, :second)
 
-  def transform(_, value) do
+  def transform(_column, value) do
     value
   end
 
