@@ -64,17 +64,26 @@ defmodule Factori.Mapping.Faker do
   def transform(_, value), do: value
 
   defp readable_varchar(options) do
-    max_size = options[:size] || 255
-    size = trunc(Float.ceil(:rand.uniform() * max_size))
-
+    size = string_max_size(options[:size])
     String.slice(Lorem.sentence(size), 1..size)
   end
 
   defp varchar(options) do
-    max_size = options[:size] || 255
-    size = trunc(Float.ceil(:rand.uniform() * max_size))
-
+    size = string_max_size(options[:size])
     String.slice(:base64.encode(:crypto.strong_rand_bytes(size)), 0..(size - 1))
+  end
+
+  # If the string has a size greater than 50, we pick a random length from 50 to it’s max size.
+  # But we limit the string generation to 500 to not generate too much data for nothing.
+  # This is to optimize large string from always generating the largest text
+  defp string_max_size(options_size) do
+    max_size = min(500, options_size || 255)
+
+    if max_size < 50 do
+      max_size
+    else
+      max(50, trunc(Float.ceil(:rand.uniform() * max_size)))
+    end
   end
 
   defp time do
