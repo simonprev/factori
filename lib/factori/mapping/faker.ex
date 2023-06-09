@@ -18,8 +18,8 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "int2"}), do: Enum.random(@ranges.smallint)
   def match(%{type: "int4"}), do: Enum.random(@ranges.integer)
   def match(%{type: "int8"}), do: Enum.random(@ranges.bigserial)
-  def match(%{type: "float4"}), do: Enum.random(@ranges.serial)
-  def match(%{type: "float8"}), do: Enum.random(@ranges.bigserial)
+  def match(%{type: "float4"}), do: Enum.random(@ranges.serial) * 1.0
+  def match(%{type: "float8"}), do: Enum.random(@ranges.bigserial) * 1.0
   def match(%{type: "numeric"}), do: Enum.random(@ranges.bigserial)
   def match(%{type: "bool"}), do: Enum.random([true, false])
 
@@ -31,23 +31,24 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "varchar", name: :email}), do: Faker.Internet.email()
   def match(%{type: "varchar", name: :phone_number}), do: Faker.Phone.EnUs.phone()
 
-  def match(%{type: "timestamp", name: name, ecto_type: :utc_datetime}) when name in @timestamps,
-    do: DateTime.truncate(DateTime.utc_now(), :second)
+  def match(%{type: "timestamp" <> _, name: name, ecto_type: :utc_datetime})
+      when name in @timestamps,
+      do: DateTime.truncate(DateTime.utc_now(), :second)
 
-  def match(%{type: "timestamp", ecto_type: :utc_datetime}),
+  def match(%{type: "timestamp" <> _, name: name, ecto_type: :naive_datetime})
+      when name in @timestamps,
+      do: DateTime.to_naive(DateTime.truncate(DateTime.utc_now(), :second))
+
+  def match(%{type: "timestamp" <> _, ecto_type: :utc_datetime}),
     do: DateTime.truncate(timestamp(), :second)
 
-  def match(%{type: "timestamp", name: name}) when name in @timestamps, do: DateTime.utc_now()
-  def match(%{type: "timestamp"}), do: timestamp()
+  def match(%{type: "timestamp" <> _, ecto_type: :naive_datetime}),
+    do: DateTime.to_naive(DateTime.truncate(timestamp(), :second))
 
-  def match(%{type: "timestampz", name: name, ecto_type: :utc_datetime}) when name in @timestamps,
-    do: DateTime.truncate(timestamp(), :second)
+  def match(%{type: "timestamp" <> _, name: name}) when name in @timestamps,
+    do: DateTime.utc_now()
 
-  def match(%{type: "timestampz", ecto_type: :utc_datetime}),
-    do: DateTime.truncate(timestamp(), :second)
-
-  def match(%{type: "timestampz", name: name}) when name in @timestamps, do: DateTime.utc_now()
-  def match(%{type: "timestampz"}), do: timestamp()
+  def match(%{type: "timestamp" <> _}), do: timestamp()
 
   def match(%{type: "varchar", name: name, options: options}) do
     if String.ends_with?(to_string(name), "_id") do
@@ -60,23 +61,20 @@ defmodule Factori.Mapping.Faker do
   def transform(%{ecto_type: :utc_datetime_usec}, value), do: DateTime.add(value, 0, :microsecond)
   def transform(%{ecto_type: :utc_datetime}, value), do: DateTime.truncate(value, :second)
 
-  def transform(_column, value) do
-    value
-  end
-
-  # def transform(_, value), do: value
+  def transform(_, value), do: value
 
   defp readable_varchar(options) do
     max_size = options[:size] || 255
+    size = trunc(Float.ceil(:rand.uniform() * max_size))
 
-    String.slice(Lorem.sentence(max_size), 1..max_size)
+    String.slice(Lorem.sentence(size), 1..size)
   end
 
   defp varchar(options) do
     max_size = options[:size] || 255
+    size = trunc(Float.ceil(:rand.uniform() * max_size))
 
-    size = Enum.random(1..max_size)
-    to_string(Lorem.characters(size))
+    String.slice(:base64.encode(:crypto.strong_rand_bytes(size)), 0..(size - 1))
   end
 
   defp time do

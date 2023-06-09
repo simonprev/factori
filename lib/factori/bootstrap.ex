@@ -2,13 +2,20 @@ defmodule Factori.Bootstrap do
   defmodule EnumDefinition do
     defstruct name: nil, mappings: []
 
-    @type t :: %__MODULE__{}
+    @type t :: %__MODULE__{
+            name: String.t(),
+            mappings: list()
+          }
   end
 
   defmodule EmbedDefinition do
     defstruct name: nil, ecto_schema: nil, cardinality: nil
 
-    @type t :: %__MODULE__{}
+    @type t :: %__MODULE__{
+            name: atom(),
+            ecto_schema: module(),
+            cardinality: atom()
+          }
   end
 
   defmodule ReferenceDefinition do
@@ -17,7 +24,12 @@ defmodule Factori.Bootstrap do
               source: nil,
               source_column: nil
 
-    @type t :: %__MODULE__{}
+    @type t :: %__MODULE__{
+            target: String.t(),
+            source: String.t(),
+            target_column: atom(),
+            source_column: atom()
+          }
   end
 
   defmodule ColumnDefinition do
@@ -28,10 +40,21 @@ defmodule Factori.Bootstrap do
               ecto_type: nil,
               ecto_schema: nil,
               struct_embed: nil,
+              struct_type: nil,
               reference: nil,
               enum: nil
 
-    @type t :: %__MODULE__{}
+    @type t :: %__MODULE__{
+            name: atom(),
+            type: String.t(),
+            options: map(),
+            ecto_type: atom() | nil,
+            ecto_schema: module() | nil,
+            struct_embed: {atom(), module(), list()} | nil,
+            struct_type: String.t() | nil,
+            reference: ReferenceDefinition.t() | nil,
+            enum: EnumDefinition.t() | nil
+          }
   end
 
   @spec init(Factori.Config.t()) :: any()
@@ -39,14 +62,7 @@ defmodule Factori.Bootstrap do
 
   @spec bootstrap(Factori.Config.t()) :: any()
   def bootstrap(config = %Factori.Config{}) do
-    config.repo
-    |> config.adapter.columns!()
-    |> Enum.each(&config.storage.insert(&1, config.storage_name))
-  end
-
-  @spec query!(module(), String.t()) :: list()
-  def query!(repo, query) do
-    result = Ecto.Adapters.SQL.query!(repo, query, [])
-    result.rows
+    columns = config.adapter.columns!(config.repo)
+    Enum.each(columns, &config.storage.insert(&1, config.storage_name))
   end
 end

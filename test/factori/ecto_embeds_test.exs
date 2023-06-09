@@ -1,6 +1,31 @@
 defmodule Factori.EctoEmbedsTest do
   use Factori.EctoCase, async: true
 
+  describe "string table name" do
+    test "insert" do
+      Code.ensure_compiled!(UserEmbedSchema)
+
+      create_table!(:users_embed, [
+        {:add, :associates, :jsonb, [null: false]},
+        {:add, :lead, :jsonb, [null: false]}
+      ])
+
+      defmodule UserTableEmbedsMappingFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Faker]
+      end
+
+      UserTableEmbedsMappingFactory.bootstrap()
+
+      user = UserTableEmbedsMappingFactory.insert("users_embed")
+
+      assert user.lead["email"]
+      assert Enum.at(user.associates, 0)["name"]
+      assert is_binary(Enum.at(user.associates, 0)["other_lead"]["inserted_at"])
+    end
+  end
+
   describe "embeds faker mapping" do
     test "nested" do
       Code.ensure_compiled!(UserEmbedSchema)

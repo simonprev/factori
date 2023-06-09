@@ -11,13 +11,35 @@ defmodule Factori.Ecto do
     end
   end
 
-  def dump_value(value, %{type: "varchar"}), do: to_string(value)
+  def dump_value(value, column) when is_struct(value) and not is_nil(column.struct_embed) do
+    {_, _, key_columns} = column.struct_embed
 
-  def dump_value(value, %{type: type}) when is_struct(value) and type in ~w(json jsonb),
-    do: Map.from_struct(value)
+    value
+    |> Map.from_struct()
+    |> Enum.map(fn {struct_key, struct_value} ->
+      key_column = Enum.find(key_columns, &(&1.name === struct_key))
+
+      key_column =
+        if key_column && key_column.ecto_type === Ecto.UUID,
+          do: %{key_column | ecto_type: nil},
+          else: key_column
+
+      {struct_key, dump_value(struct_value, key_column)}
+    end)
+    |> Map.new()
+  end
+
+  def dump_value(value, column) when is_struct(value) and column.type in ~w(json jsonb) do
+    Map.from_struct(value)
+  end
+
+  def dump_value(value, column) when is_list(value),
+    do: Enum.map(value, &dump_value(&1, column))
 
   def dump_value(value, %{ecto_schema: nil, enum: enum}) when is_struct(enum),
     do: to_string(value)
+
+  def dump_value(value, column) when column.type === "varchar", do: to_string(value)
 
   def dump_value(value, _), do: value
 

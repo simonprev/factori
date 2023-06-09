@@ -98,7 +98,7 @@ defmodule Factori do
 
   def insert_list(config, table_name, count, struct_module, attrs, source_column)
       when is_atom(struct_module) and not is_nil(struct_module) do
-    if Variant.struct_module_source!(struct_module) do
+    if Variant.ecto_schema_module_source!(struct_module) do
       ensure_valid_table_name!(config, table_name)
 
       data =
@@ -148,7 +148,7 @@ defmodule Factori do
 
   def insert(config, table_name, struct_module, attrs, source_column)
       when is_atom(struct_module) and not is_nil(struct_module) do
-    if Variant.struct_module_source!(struct_module) do
+    if Variant.ecto_schema_module_source!(struct_module) do
       ensure_valid_table_name!(config, table_name)
 
       {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column, false)
@@ -181,7 +181,7 @@ defmodule Factori do
 
   def build(config, table_name, struct_module, attrs, source_column)
       when is_atom(struct_module) and not is_nil(struct_module) do
-    if Variant.struct_module_source!(struct_module) do
+    if Variant.ecto_schema_module_source!(struct_module) do
       ensure_valid_table_name!(config, table_name)
 
       {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column, false)
@@ -208,7 +208,28 @@ defmodule Factori do
 
   def seed(config, table_name, count, struct_module, attrs, source_column)
       when is_atom(struct_module) and not is_nil(struct_module) do
-    seed(config, table_name, count, attrs, source_column, struct_module)
+    if Variant.ecto_schema_module_source!(struct_module) do
+      ensure_valid_table_name!(config, table_name)
+      parent = self()
+
+      data =
+        for _ <- 1..count,
+            into: [],
+            do: map_attributes(config, table_name, attrs, source_column, false)
+
+      data
+      |> Enum.map(&elem(&1, 0))
+      |> Stream.chunk_every(@insert_all_chunk)
+      |> Task.async_stream(
+        &config.repo.insert_all(struct_module, &1, caller: parent, returning: false),
+        ordered: false
+      )
+      |> Stream.run()
+
+      :ok
+    else
+      seed(config, table_name, count, attrs, source_column, struct_module)
+    end
   end
 
   def seed(config, table_name, count, attrs, source_column, _) do

@@ -48,13 +48,16 @@ defmodule Factori.Adapter.Postgresql do
     db_enums = enums_definitions(repo)
 
     repo
-    |> Bootstrap.query!(@columns)
+    |> query!(@columns)
     |> Enum.group_by(&List.first/1)
     |> Enum.reduce(%{}, fn {table_name, columns}, acc ->
       references = Map.get(references, table_name, [])
 
       ecto_schema =
-        Enum.find_value(ecto_schemas, fn {module, table} -> table == table_name && module end)
+        ecto_schemas
+        |> Enum.flat_map(fn {module, table} -> if table == table_name, do: [module], else: [] end)
+        |> Enum.sort_by(&String.length(inspect(&1)))
+        |> List.first()
 
       columns =
         columns
@@ -70,7 +73,7 @@ defmodule Factori.Adapter.Postgresql do
 
   defp enums_definitions(repo) do
     repo
-    |> Bootstrap.query!(@enums)
+    |> query!(@enums)
     |> Enum.group_by(&hd(&1), &Enum.at(&1, 1))
     |> Enum.map(fn {enum_value, enum_labels} ->
       %Bootstrap.EnumDefinition{
@@ -82,7 +85,7 @@ defmodule Factori.Adapter.Postgresql do
 
   defp reference_definitions(repo) do
     repo
-    |> Bootstrap.query!(@references)
+    |> query!(@references)
     |> Enum.map(fn [target, target_column, source, source_column] ->
       %Bootstrap.ReferenceDefinition{
         source: source,
@@ -205,12 +208,12 @@ defmodule Factori.Adapter.Postgresql do
       :naive_datetime -> "timestamp"
       :utc_datetime_usec -> "timestamp"
       :naive_datetime_usec -> "timestamp"
-      :boolean -> "boolean"
+      :boolean -> "bool"
       :float -> "float4"
       :time -> "time"
       :date -> "date"
       :string -> "varchar"
-      :integer -> "int8"
+      :integer -> "int4"
       :binary_id -> "varchar"
       :decimal -> "float4"
       {:array, _} -> "array"
@@ -233,5 +236,10 @@ defmodule Factori.Adapter.Postgresql do
     struct_module.__schema__(:source)
   rescue
     UndefinedFunctionError -> nil
+  end
+
+  defp query!(repo, query) do
+    result = Ecto.Adapters.SQL.query!(repo, query, [])
+    result.rows
   end
 end

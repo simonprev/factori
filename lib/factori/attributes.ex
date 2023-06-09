@@ -121,10 +121,13 @@ defmodule Factori.Attributes do
   defp find_attributes_mapping(mappings, columns, options) do
     for column <- columns, into: %{} do
       value_mapping =
-        Enum.find_value(mappings, fn mapping ->
-          value = find_mapping_value(mappings, mapping, column, options)
-          value !== :not_found && value
-        end)
+        case Enum.find_value(mappings, fn mapping ->
+               value = find_mapping_value(mappings, mapping, column, options)
+               value !== :not_found && {:ok, value}
+             end) do
+          {:ok, value} -> value
+          _ -> nil
+        end
 
       {column.name, value_mapping}
     end

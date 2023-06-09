@@ -45,7 +45,6 @@ defmodule Factori.Mapping.FakerTest do
       defmodule TypesFactory do
         use Factori,
           repo: Factori.TestRepo,
-          variants: [{:user, "users"}],
           mappings: [Factori.Mapping.Faker]
       end
 
