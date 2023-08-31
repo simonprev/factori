@@ -152,6 +152,7 @@ defmodule Factori do
       ensure_valid_table_name!(config, table_name)
 
       {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column, false)
+
       data = hd(insert_all_struct(config, struct_module, [db_attrs]))
 
       Map.merge(data, Enum.into(struct_attrs, %{}))
@@ -167,6 +168,7 @@ defmodule Factori do
     ensure_valid_table_name!(config, table_name)
 
     {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column)
+
     data = hd(insert_all(config, table_name, [db_attrs]))
 
     Map.merge(data, Enum.into(struct_attrs, %{}))

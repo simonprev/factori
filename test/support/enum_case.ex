@@ -9,3 +9,22 @@ defmodule UserEnumSchema do
     field(:type, Ecto.Enum, values: [:admin, :user])
   end
 end
+
+defmodule PostEnumSchema do
+  @moduledoc false
+  use Ecto.Schema
+
+  schema "posts_enum" do
+    field(:status, Ecto.Enum, values: [:draft, :admin])
+  end
+end
+
+defmodule UserPostEnumSchema do
+  @moduledoc false
+  use Ecto.Schema
+
+  @primary_key false
+  schema "users_posts_enum" do
+    belongs_to(:post, PostEnumSchema)
+  end
+end

@@ -30,6 +30,8 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "bytea", options: options}), do: varchar(options)
   def match(%{type: "varchar", name: :email}), do: Faker.Internet.email()
   def match(%{type: "varchar", name: :phone_number}), do: Faker.Phone.EnUs.phone()
+  def match(%{type: "_varchar"}), do: []
+  def match(%{type: "tsvector"}), do: []
 
   def match(%{type: "timestamp" <> _, name: name, ecto_type: :utc_datetime})
       when name in @timestamps,

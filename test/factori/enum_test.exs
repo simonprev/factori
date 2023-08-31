@@ -70,6 +70,24 @@ defmodule Factori.EnumTest do
       assert user.type in [:admin, :user]
     end
 
+    test "from schema ecto variant db enum" do
+      Factori.TestRepo.query!("CREATE TYPE simple_user_type AS ENUM ('admin', 'user')")
+      Code.ensure_compiled!(UserEnumSchema)
+      create_table!(:users_enum, [{:add, :type, :simple_user_type, [null: false]}])
+
+      defmodule EctoDbEnumVariantUserFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [Factori.Mapping.Enum],
+          variants: [{:user, UserEnumSchema}]
+      end
+
+      EctoDbEnumVariantUserFactory.bootstrap()
+
+      user = EctoDbEnumVariantUserFactory.insert(:user)
+      assert user.type in [:admin, :user]
+    end
+
     test "from schema ecto enum on variant invalid dump" do
       Code.ensure_compiled!(UserEnumSchema)
       create_table!(:users_enum, [{:add, :type, :string, [null: false]}])
@@ -105,6 +123,41 @@ defmodule Factori.EnumTest do
 
       user = EctoEnumUserVariantFactory.insert(:admin)
       assert user.type === :admin
+    end
+
+    test "from schema ecto enum on variant association" do
+      Factori.TestRepo.query!("CREATE TYPE post_status_type AS ENUM ('draft', 'admin')")
+
+      Code.ensure_compiled!(UserPostEnumSchema)
+      Code.ensure_compiled!(PostEnumSchema)
+
+      create_table!(:posts_enum, [
+        {:add, :id, :integer, [primary_key: true, null: false]},
+        {:add, :status, :post_status_type, [null: false]}
+      ])
+
+      reference = %Ecto.Migration.Reference{
+        name: :post_id,
+        type: :bigint,
+        table: :posts_enum
+      }
+
+      create_table!(:users_posts_enum, [
+        {:add, :post_id, reference, [null: false]}
+      ])
+
+      defmodule EctoEnumUserReferenceVariantFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [Factori.Mapping.Enum, fn %{name: :id} -> 1 end],
+          variants: [user: UserPostEnumSchema, post: PostEnumSchema]
+      end
+
+      EctoEnumUserReferenceVariantFactory.bootstrap()
+
+      user = EctoEnumUserReferenceVariantFactory.insert(:user)
+      user = Factori.TestRepo.preload(user, :post)
+      assert user.post.status in [:draft, :admin]
     end
   end
 end

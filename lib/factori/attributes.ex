@@ -121,12 +121,22 @@ defmodule Factori.Attributes do
   defp find_attributes_mapping(mappings, columns, options) do
     for column <- columns, into: %{} do
       value_mapping =
-        case Enum.find_value(mappings, fn mapping ->
-               value = find_mapping_value(mappings, mapping, column, options)
-               value !== :not_found && {:ok, value}
-             end) do
-          {:ok, value} -> value
-          _ -> nil
+        Enum.find_value(mappings, fn mapping ->
+          value = find_mapping_value(mappings, mapping, column, options)
+          value !== :not_found && {:ok, value}
+        end)
+
+      value_mapping =
+        case value_mapping do
+          {:ok, value} ->
+            Enum.reduce(mappings, value, fn mapping, acc ->
+              find_transformed_value(mapping, column, acc)
+            end)
+
+          _ ->
+            Logger.warn("Can't find a mapping for #{inspect(column)}")
+
+            nil
         end
 
       {column.name, value_mapping}

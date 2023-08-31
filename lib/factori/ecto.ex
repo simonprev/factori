@@ -39,7 +39,12 @@ defmodule Factori.Ecto do
   def dump_value(value, %{ecto_schema: nil, enum: enum}) when is_struct(enum),
     do: to_string(value)
 
+  def dump_value(value, %{enum: %{name: enum_name}, type: column_type})
+      when enum_name === column_type,
+      do: to_string(value)
+
   def dump_value(value, column) when column.type === "varchar", do: to_string(value)
+  def dump_value(value, column) when column.type === "_varchar", do: to_string(value)
 
   def dump_value(value, _), do: value
 
