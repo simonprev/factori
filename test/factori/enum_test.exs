@@ -71,9 +71,9 @@ defmodule Factori.EnumTest do
     end
 
     test "from schema ecto variant db enum" do
-      Factori.TestRepo.query!("CREATE TYPE simple_user_type AS ENUM ('admin', 'user')")
+      Factori.TestRepo.query!("CREATE TYPE simple_user_db_type AS ENUM ('admin', 'user')")
       Code.ensure_compiled!(UserEnumSchema)
-      create_table!(:users_enum, [{:add, :type, :simple_user_type, [null: false]}])
+      create_table!(:users_enum, [{:add, :type, :simple_user_db_type, [null: false]}])
 
       defmodule EctoDbEnumVariantUserFactory do
         use Factori,
