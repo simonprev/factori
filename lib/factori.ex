@@ -76,10 +76,11 @@ defmodule Factori do
     @type t :: %__MODULE__{}
   end
 
-  @spec bootstrap(Factori.Config.t()) :: no_return()
+  @spec bootstrap(Factori.Config.t()) :: :ok
   def bootstrap(factory_config) do
     Factori.Bootstrap.init(factory_config)
     Factori.Bootstrap.bootstrap(factory_config)
+    :ok
   end
 
   def insert_list(
