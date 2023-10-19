@@ -199,6 +199,42 @@ defmodule Factori.EctoVariantsTest do
                    end
     end
 
+    test "key in database not in schema" do
+      create_table!(:users, [
+        {:add, :id, :string, [size: 1, null: false]},
+        {:add, :name, :string, [size: 10, null: false]}
+      ])
+
+      defmodule UserFieldNotUsedInSchema do
+        use Ecto.Schema
+
+        @primary_key {:id, :string, []}
+        schema "users" do
+        end
+      end
+
+      defmodule UserFieldNotUsedInFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          variants: [{:user, UserFieldNotUsedInSchema}],
+          mappings: [
+            fn
+              %{name: :id} -> "1"
+              %{name: :name} -> "foo"
+            end
+          ]
+      end
+
+      UserFieldNotUsedInFactory.bootstrap()
+
+      user = UserFieldNotUsedInFactory.insert(:user)
+      assert user.__struct__ === UserFieldNotUsedInSchema
+      assert user.id
+
+      # Make sure that the mapping is persisted in the database.
+      assert Factori.TestRepo.query!("SELECT name FROM users LIMIT 1").rows === [["foo"]]
+    end
+
     test "schema virtual overrides" do
       create_table!(:users, [
         {:add, :id, :string, [size: 1, null: false]},

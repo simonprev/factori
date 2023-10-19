@@ -274,12 +274,31 @@ defmodule Factori do
   end
 
   defp insert_all_struct(config, struct, attrs) do
+    attr = List.wrap(List.first(attrs))
+    keys = MapSet.new(Map.keys(Map.new(attr)))
+    fields = MapSet.new(struct.__schema__(:fields))
+
+    # If the supplied arguments are NOT a subset of the fields exposed by the struct,
+    # It means that there are columns in the database not defined in the schema.
+    # The insert_all with a struct won’t work in that case since it will try to map unknown keys to the struct.
+    # We use the table name instead and map the records back to the struct with the fields exposed by the struct.
+    {source, opts} =
+      if MapSet.subset?(keys, fields) do
+        {struct, [returning: true]}
+      else
+        {struct.__schema__(:source), [returning: Enum.to_list(fields)]}
+      end
+
     attrs
     |> Enum.chunk_every(@insert_all_chunk)
     |> Enum.flat_map(fn attrs ->
-      case config.repo.insert_all(struct, attrs, returning: true) do
-        {_, records} ->
-          records
+      case config.repo.insert_all(source, attrs, opts) do
+        {_, records} when is_list(records) ->
+          if opts[:returning] === true do
+            records
+          else
+            Enum.map(records, &struct!(struct, &1))
+          end
 
         _ ->
           []
