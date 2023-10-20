@@ -202,6 +202,7 @@ defmodule Factori.EctoVariantsTest do
     test "key in database not in schema" do
       create_table!(:users, [
         {:add, :id, :string, [size: 1, null: false]},
+        {:add, :other_id, :uuid, [null: false]},
         {:add, :name, :string, [size: 10, null: false]}
       ])
 
@@ -210,6 +211,7 @@ defmodule Factori.EctoVariantsTest do
 
         @primary_key {:id, :string, []}
         schema "users" do
+          field(:other_id, Ecto.UUID)
         end
       end
 
@@ -219,6 +221,7 @@ defmodule Factori.EctoVariantsTest do
           variants: [{:user, UserFieldNotUsedInSchema}],
           mappings: [
             fn
+              %{name: :other_id} -> Ecto.UUID.generate()
               %{name: :id} -> "1"
               %{name: :name} -> "foo"
             end
@@ -230,6 +233,7 @@ defmodule Factori.EctoVariantsTest do
       user = UserFieldNotUsedInFactory.insert(:user)
       assert user.__struct__ === UserFieldNotUsedInSchema
       assert user.id
+      assert user.other_id
 
       # Make sure that the mapping is persisted in the database.
       assert Factori.TestRepo.query!("SELECT name FROM users LIMIT 1").rows === [["foo"]]

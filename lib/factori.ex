@@ -273,8 +273,8 @@ defmodule Factori do
     )
   end
 
-  defp insert_all_struct(config, struct, attrs) do
-    attr = List.wrap(List.first(attrs))
+  defp insert_all_struct(config, struct, attrs_list) do
+    attr = List.wrap(List.first(attrs_list))
     keys = MapSet.new(Map.keys(Map.new(attr)))
     fields = MapSet.new(struct.__schema__(:fields))
 
@@ -282,14 +282,24 @@ defmodule Factori do
     # It means that there are columns in the database not defined in the schema.
     # The insert_all with a struct won’t work in that case since it will try to map unknown keys to the struct.
     # We use the table name instead and map the records back to the struct with the fields exposed by the struct.
-    {source, opts} =
+    #
+    # The attributes need to be Ecto dumped before inserting with the table name as a string.
+    {source, attrs_list, opts} =
       if MapSet.subset?(keys, fields) do
-        {struct, [returning: true]}
+        {struct, attrs_list, [returning: true]}
       else
-        {struct.__schema__(:source), [returning: Enum.to_list(fields)]}
+        attrs_list =
+          Enum.map(attrs_list, fn attrs ->
+            Enum.map(attrs, fn {field_name, value} ->
+              type = struct.__schema__(:type, field_name)
+              {field_name, Factori.Ecto.dump_value(value, %{ecto_type: type})}
+            end)
+          end)
+
+        {struct.__schema__(:source), attrs_list, [returning: Enum.to_list(fields)]}
       end
 
-    attrs
+    attrs_list
     |> Enum.chunk_every(@insert_all_chunk)
     |> Enum.flat_map(fn attrs ->
       case config.repo.insert_all(source, attrs, opts) do
