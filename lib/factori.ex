@@ -274,6 +274,8 @@ defmodule Factori do
   end
 
   defp insert_all_struct(config, struct, attrs_list) do
+    columns = config.storage.get(struct.__schema__(:source), config.storage_name)
+
     attr = List.wrap(List.first(attrs_list))
     keys = MapSet.new(Map.keys(Map.new(attr)))
     fields = MapSet.new(struct.__schema__(:fields))
@@ -291,8 +293,8 @@ defmodule Factori do
         attrs_list =
           Enum.map(attrs_list, fn attrs ->
             Enum.map(attrs, fn {field_name, value} ->
-              type = struct.__schema__(:type, field_name)
-              {field_name, Factori.Ecto.dump_value(value, %{ecto_type: type})}
+              column = Enum.find(columns, &(&1.name === field_name))
+              {field_name, Factori.Ecto.dump_value(value, column)}
             end)
           end)
 
@@ -307,7 +309,7 @@ defmodule Factori do
           if opts[:returning] === true do
             records
           else
-            Enum.map(records, &struct!(struct, &1))
+            Enum.map(records, &load_record_values(struct!(struct, &1), columns))
           end
 
         _ ->
