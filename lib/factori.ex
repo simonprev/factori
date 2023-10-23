@@ -309,7 +309,12 @@ defmodule Factori do
           if opts[:returning] === true do
             records
           else
-            Enum.map(records, &load_record_values(struct!(struct, &1), columns))
+            Enum.map(records, fn record ->
+              struct = struct!(struct, record)
+              struct = %{struct | __meta__: %{struct.__meta__ | state: :loaded}}
+
+              load_record_values(struct, columns)
+            end)
           end
 
         _ ->

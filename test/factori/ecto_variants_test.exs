@@ -234,6 +234,7 @@ defmodule Factori.EctoVariantsTest do
       assert user.__struct__ === UserFieldNotUsedInSchema
       assert user.id
       assert user.other_id
+      assert user.__meta__.state === :loaded
 
       other_user =
         UserFieldNotUsedInFactory.insert(UserFieldNotUsedInSchema,
@@ -243,6 +244,7 @@ defmodule Factori.EctoVariantsTest do
       assert other_user.__struct__ === UserFieldNotUsedInSchema
       assert other_user.id === "d3a26de5-c579-43d2-8089-1b45c3812b82"
       assert other_user.other_id
+      assert other_user.__meta__.state === :loaded
 
       # Make sure that the mapping is persisted in the database.
       assert Factori.TestRepo.query!("SELECT name FROM users LIMIT 1").rows === [["foo"]]
