@@ -55,7 +55,7 @@ defmodule Factori.Attributes do
                   end)
 
                 _ ->
-                  Logger.warn("Can't find a mapping for #{inspect(column)}")
+                  Logger.warning("Can't find a mapping for #{inspect(column)}")
 
                   nil
               end
@@ -134,7 +134,7 @@ defmodule Factori.Attributes do
             end)
 
           _ ->
-            Logger.warn("Can't find a mapping for #{inspect(column)}")
+            Logger.warning("Can't find a mapping for #{inspect(column)}")
 
             nil
         end
