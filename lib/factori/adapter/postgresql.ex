@@ -139,12 +139,10 @@ defmodule Factori.Adapter.Postgresql do
       end
 
     ecto_type =
-      with schema when not is_nil(schema) <- ecto_schema,
-           true <- identifier in fields,
-           type when is_atom(type) <- ecto_schema.__schema__(:type, identifier) do
-        type
-      else
-        _ -> nil
+      if !!ecto_schema && identifier in fields do
+        :type
+        |> ecto_schema.__schema__(identifier)
+        |> assured_atom_or_parameterized_type()
       end
 
     reference =
@@ -173,6 +171,15 @@ defmodule Factori.Adapter.Postgresql do
         size: size
       }
     }
+  end
+
+  @spec assured_atom_or_parameterized_type(term()) :: atom() | module()
+  defp assured_atom_or_parameterized_type(type) do
+    case type do
+      type when is_atom(type) -> type
+      {:parameterized, type, []} when is_atom(type) -> type
+      _ -> nil
+    end
   end
 
   defp generate_embed_columns(_, nil), do: nil
