@@ -49,10 +49,10 @@ defmodule Factori.Ecto do
   def dump_value(value, %{ecto_type: ecto_type_module})
       when is_struct(value) and is_atom(ecto_type_module) do
     with true <- function_exported?(ecto_type_module, :dump, 1),
-        {:ok, value} <- ecto_type_module.dump(value) do
+         {:ok, value} <- ecto_type_module.dump(value) do
       value
-      else
-        _ -> value
+    else
+      _ -> value
     end
   end
 
