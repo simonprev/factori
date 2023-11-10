@@ -250,6 +250,30 @@ defmodule Factori.EctoVariantsTest do
       assert Factori.TestRepo.query!("SELECT name FROM users LIMIT 1").rows === [["foo"]]
     end
 
+    test "schema custom type" do
+      create_table!(:users, [
+        {:add, :id, :string, [size: 1, null: false]},
+        {:add, :uuid_slug, :uuid, [null: false]},
+        {:add, :amount, :integer, [null: false]}
+      ])
+
+      defmodule UserCustomTypeFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          variants: [{:user, UserCustomTypeSchema}],
+          mappings: [
+            fn %{name: :amount} -> Money.new(100, :USD) end,
+            Factori.Mapping.Faker
+          ]
+      end
+
+      UserCustomTypeFactory.bootstrap()
+
+      user = UserCustomTypeFactory.insert(:user)
+      assert user.uuid_slug
+      assert user.amount === Money.new(100, :USD)
+    end
+
     test "schema virtual overrides" do
       create_table!(:users, [
         {:add, :id, :string, [size: 1, null: false]},

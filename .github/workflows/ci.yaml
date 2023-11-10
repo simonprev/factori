@@ -5,10 +5,6 @@ on: [push, pull_request]
 jobs:
   ci:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        otp-version: [24.2]
-        elixir-version: [1.13.1]
 
     services:
       db:
@@ -27,24 +23,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: erlef/setup-elixir@v1
+      - uses: erlef/setup-beam@v1
+        id: setup-beam
         with:
-          elixir-version: ${{ matrix.elixir-version }}
-          otp-version: ${{ matrix.otp-version }}
+          version-file: .tool-versions
+          version-type: strict
 
-      - uses: actions/cache@v1
-        id: deps-cache
+      - uses: actions/cache@v3
         with:
-          path: deps
-          key: ${{ runner.os }}-deps-${{ hashFiles(format('{0}/mix.lock', github.workspace)) }}
-          restore-keys: |
-            ${{ runner.os }}-deps-
-
-      - uses: actions/cache@v1
-        id: build-cache
-        with:
-          path: _build
-          key: ${{ runner.os }}-build-${{ matrix.otp-version }}-${{ matrix.elixir-version }}-${{ hashFiles(format('{0}/mix.lock', github.workspace)) }}
+          path: |
+            deps
+            _build
+            priv/plts
+          key: ${{ runner.os }}-mix-${{ steps.setup-beam.outputs.otp-version }}-${{ steps.setup-beam.outputs.elixir-version }}-${{ hashFiles(format('{0}/mix.lock', github.workspace)) }}
 
       - run: make prepare
       - run: make check-format

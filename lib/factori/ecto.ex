@@ -4,13 +4,6 @@ defmodule Factori.Ecto do
 
   def dump_value(nil, _), do: nil
 
-  def dump_value(value, %{ecto_type: Ecto.UUID}) do
-    case Ecto.Type.dump(Ecto.UUID, value) do
-      {:ok, value} -> value
-      :error -> nil
-    end
-  end
-
   def dump_value(value, column) when is_struct(value) and not is_nil(column.struct_embed) do
     {_, _, key_columns} = column.struct_embed
 
@@ -47,9 +40,9 @@ defmodule Factori.Ecto do
   def dump_value(value, column) when column.type === "_varchar", do: to_string(value)
 
   def dump_value(value, %{ecto_type: ecto_type_module})
-      when is_struct(value) and is_atom(ecto_type_module) do
+      when is_atom(ecto_type_module) do
     with true <- function_exported?(ecto_type_module, :dump, 1),
-         {:ok, value} <- ecto_type_module.dump(value) do
+         {:ok, value} <- Ecto.Type.dump(ecto_type_module, value) do
       value
     else
       _ -> value
