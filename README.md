@@ -182,6 +182,15 @@ Ecto struct can also be used directly as variant
 Factory.insert(MyApp.User)
 ```
 
+### For devs running tests
+
+Need env var, probably like this:
+
+```shell
+export DATABASE_URL=postgres://postgres@localhost/factori_test
+```
+
+
 ## License
 
 `factori` is © 2023 [Mirego](https://www.mirego.com) and may be freely distributed under the [New BSD license](http://opensource.org/licenses/BSD-3-Clause). See the [`LICENSE.md`](https://github.com/simonprev/factori/blob/master/LICENSE.md) file.
