@@ -9,7 +9,7 @@ defmodule Factori.Attributes do
       """
       Cyclic dependencies are not supported.
 
-      "#{source.table_name}"."#{source.name}" is not nullable and references "#{column.table_name}"."#{column.name}" who is alos not nullable.
+      "#{source.table_name}"."#{source.name}" is not nullable and references "#{column.table_name}"."#{column.name}" who is also not nullable.
       To fix this, make one of them nullable.
       """
     end
@@ -85,7 +85,8 @@ defmodule Factori.Attributes do
       not is_nil(existing_reference_value) ->
         existing_reference_value
 
-      source_column && source_column.table_name === reference_table_name ->
+      source_column && source_column.options.null === false &&
+          source_column.table_name === reference_table_name ->
         if column.options.null do
           nil
         else

@@ -157,5 +157,36 @@ defmodule Factori.ReferencesTest do
         DoubleFactory.insert("posts")
       end
     end
+
+    test "double reference nil probability fallback" do
+      create_table!(:users, [
+        {:add, :id, :integer, [primary_key: true, null: false]}
+      ])
+
+      user_reference = %Ecto.Migration.Reference{name: :author_id, type: :bigint, table: :users}
+
+      create_table!(:posts, [
+        {:add, :id, :integer, [primary_key: true, null: false]},
+        {:add, :author_id, user_reference, [null: true]}
+      ])
+
+      post_reference = %Ecto.Migration.Reference{
+        name: :last_post_id,
+        type: :bigint,
+        table: :posts
+      }
+
+      alter_table!(:users, [{:add, :last_post_id, post_reference, [null: false]}])
+
+      defmodule DoubleFactoryFallback do
+        use Factori,
+          options: [nil_probability: 0],
+          repo: Factori.TestRepo,
+          mappings: [Factori.Mapping.Faker]
+      end
+
+      DoubleFactoryFallback.bootstrap()
+      DoubleFactoryFallback.insert("posts")
+    end
   end
 end
