@@ -60,5 +60,11 @@ defmodule Factori.Ecto do
     end
   end
 
+  def load_value(value, %{ecto_type: ecto_type})
+      when ecto_type in ~w(utc_datetime utc_datetime_usec)a and
+             is_struct(value, NaiveDateTime) do
+    DateTime.from_naive!(value, "Etc/UTC")
+  end
+
   def load_value(value, _), do: value
 end
