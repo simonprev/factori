@@ -312,6 +312,7 @@ defmodule Factori do
             Enum.map(records, fn record ->
               struct = struct!(struct, record)
               struct = %{struct | __meta__: %{struct.__meta__ | state: :loaded}}
+              columns = Enum.filter(columns, &Enum.member?(fields, &1.name))
 
               load_record_values(struct, columns)
             end)

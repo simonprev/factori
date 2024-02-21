@@ -199,6 +199,39 @@ defmodule Factori.EctoVariantsTest do
                    end
     end
 
+    test "key in database not in schema map ecto type" do
+      Code.ensure_compiled!(UserDateTimeSchema)
+
+      create_table!(:users_datetime, [
+        {:add, :id, :uuid, [null: false]},
+        {:add, :inserted_at, :utc_datetime, [null: false]},
+        {:add, :usec_inserted_at, :utc_datetime, [null: false]},
+        {:add, :deprecated, :boolean, [null: false]}
+      ])
+
+      defmodule UserEctoFieldNotUsedInFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [
+            fn
+              %{name: :deprecated} -> true
+              %{name: :id} -> Ecto.UUID.generate()
+              %{name: _} -> DateTime.utc_now()
+            end
+          ]
+      end
+
+      UserEctoFieldNotUsedInFactory.bootstrap()
+
+      user = UserEctoFieldNotUsedInFactory.insert(UserDateTimeSchema)
+      assert user.__struct__ === UserDateTimeSchema
+      refute Map.has_key?(user, :id)
+      refute Map.has_key?(user, :deprecated)
+      assert is_struct(user.inserted_at, DateTime)
+      assert is_struct(user.usec_inserted_at, DateTime)
+      assert user.__meta__.state === :loaded
+    end
+
     test "key in database not in schema" do
       create_table!(:users, [
         {:add, :id, :uuid, [null: false]},
