@@ -41,7 +41,8 @@ defmodule Factori.Ecto do
 
   def dump_value(value, %{ecto_type: ecto_type_module})
       when is_atom(ecto_type_module) do
-    with true <- function_exported?(ecto_type_module, :dump, 1),
+    with {:module, ecto_type_module} <- Code.ensure_loaded(ecto_type_module),
+         true <- function_exported?(ecto_type_module, :dump, 1),
          {:ok, value} <- Ecto.Type.dump(ecto_type_module, value) do
       value
     else
