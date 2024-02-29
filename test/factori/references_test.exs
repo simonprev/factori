@@ -180,9 +180,9 @@ defmodule Factori.ReferencesTest do
 
       defmodule DoubleFactoryFallback do
         use Factori,
-          options: [nil_probability: 0],
           repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Faker]
+          mappings: [Factori.Mapping.Faker],
+          null?: [fn _ -> false end]
       end
 
       DoubleFactoryFallback.bootstrap()

@@ -35,10 +35,6 @@ defmodule Factori do
     end
   end
 
-  defmodule Options do
-    defstruct nil_probability: 0.5
-  end
-
   defmodule InvalidSchemaError do
     defexception [:schema, :name]
 
@@ -71,7 +67,7 @@ defmodule Factori do
               adapter: nil,
               variants: [],
               mappings: [],
-              options: []
+              null?: []
 
     @type t :: %__MODULE__{}
   end
@@ -362,7 +358,7 @@ defmodule Factori do
           adapter: unquote(opts[:adapter]) || Factori.Adapter.Postgresql,
           mappings: List.wrap(unquote(opts[:mappings])),
           variants: List.wrap(unquote(opts[:variants])),
-          options: struct!(Factori.Options, List.wrap(unquote(opts[:options])))
+          null?: List.wrap(unquote(opts[:null?]))
         }
       end
 

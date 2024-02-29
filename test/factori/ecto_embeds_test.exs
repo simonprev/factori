@@ -35,11 +35,17 @@ defmodule Factori.EctoEmbedsTest do
 
   describe "embeds faker mapping" do
     test "nested" do
+      Code.ensure_compiled!(UserAddressEmbedSchema)
       Code.ensure_compiled!(UserEmbedSchema)
 
       create_table!(:users_embed, [
         {:add, :associates, :jsonb, [null: false]},
         {:add, :lead, :jsonb, [null: false]}
+      ])
+
+      create_table!(:users_address_embed, [
+        {:add, :id, :integer, [null: false]},
+        {:add, :street, :string, [null: false]}
       ])
 
       defmodule UserEmbedsMappingFactory do

@@ -144,7 +144,7 @@ defmodule Factori.Attributes do
   end
 
   defp find_mapping_value(config, mapping, column) when is_list(mapping) do
-    maybe_nil(column, config.options, fn ->
+    maybe_nil(column, config.null?, fn ->
       maybe_nested_mapping(config, mapping[:match].(column))
     end)
   rescue
@@ -152,22 +152,47 @@ defmodule Factori.Attributes do
   end
 
   defp find_mapping_value(config, mapping, column) when is_function(mapping) do
-    maybe_nil(column, config.options, fn -> maybe_nested_mapping(config, mapping.(column)) end)
+    maybe_nil(column, config.null?, fn -> maybe_nested_mapping(config, mapping.(column)) end)
   rescue
     FunctionClauseError -> :not_found
   end
 
   defp find_mapping_value(config, module, column) when is_atom(module) do
-    maybe_nil(column, config.options, fn ->
+    maybe_nil(column, config.null?, fn ->
       maybe_nested_mapping(config, module.match(column))
     end)
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp maybe_nil(column, options, func) do
-    if column.options.null && nil_probability?(options), do: nil, else: func.()
+  defp find_null_value(null, column) when is_function(null) do
+    null.(column)
+  rescue
+    FunctionClauseError -> :not_found
   end
 
-  defp nil_probability?(options), do: :rand.uniform() < options.nil_probability
+  defp find_null_value(module, column) when is_atom(module) do
+    module.null?(column)
+  rescue
+    FunctionClauseError -> :not_found
+  end
+
+  defp maybe_nil(column, null, func) do
+    null_mapping =
+      Enum.find_value(null, fn null ->
+        value = find_null_value(null, column)
+        value !== :not_found && {:ok, value}
+      end)
+
+    null? =
+      case null_mapping do
+        {:ok, value} ->
+          value
+
+        _ ->
+          column.options.null
+      end
+
+    if null?, do: nil, else: func.()
+  end
 end

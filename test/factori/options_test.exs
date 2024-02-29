@@ -1,37 +1,106 @@
 defmodule Factori.OptionsTest do
   use Factori.EctoCase, async: true
 
-  describe "nil_probability" do
-    test "0" do
-      create_table!(:users, [{:add, :id, :string, [null: true]}])
+  describe "nil? match" do
+    test "default" do
+      create_table!(:users, [
+        {:add, :id, :string, [null: true]},
+        {:add, :name, :string, [null: false]}
+      ])
 
-      defmodule NeverNilProbabilityFactory do
+      defmodule DefaultNullabilityFactory do
         use Factori,
           repo: Factori.TestRepo,
-          options: [nil_probability: 1],
+          mappings: [fn _ -> "name" end]
+      end
+
+      DefaultNullabilityFactory.bootstrap()
+
+      user = DefaultNullabilityFactory.insert("users")
+      refute user.id
+      assert user.name
+    end
+
+    test "always true" do
+      create_table!(:users, [{:add, :id, :string, [null: true]}])
+
+      defmodule NeverNullabilityFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          null?: [fn _ -> true end],
           mappings: [fn _ -> "1" end]
       end
 
-      NeverNilProbabilityFactory.bootstrap()
+      NeverNullabilityFactory.bootstrap()
 
-      user = NeverNilProbabilityFactory.insert("users")
+      user = NeverNullabilityFactory.insert("users")
       refute user.id
     end
 
-    test "1" do
+    test "always false" do
       create_table!(:users, [{:add, :id, :string, [null: true]}])
 
-      defmodule AlwaysNilProbabilityFactory do
+      defmodule AlwaysNullabilityProbabilityFactory do
         use Factori,
           repo: Factori.TestRepo,
-          options: [nil_probability: 0],
+          null?: [fn _ -> false end],
           mappings: [fn _ -> "1" end]
       end
 
-      AlwaysNilProbabilityFactory.bootstrap()
+      AlwaysNullabilityProbabilityFactory.bootstrap()
 
-      user = AlwaysNilProbabilityFactory.insert("users")
+      user = AlwaysNullabilityProbabilityFactory.insert("users")
       assert user.id
+    end
+
+    test "column match" do
+      create_table!(:users, [
+        {:add, :id, :string, [null: true]},
+        {:add, :name, :string, [null: true]}
+      ])
+
+      defmodule ColumnMatchNullabilityProbabilityFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          null?: [
+            fn %{name: :name} -> false end,
+            fn %{name: :id} -> true end
+          ],
+          mappings: [fn _ -> "1" end]
+      end
+
+      ColumnMatchNullabilityProbabilityFactory.bootstrap()
+
+      user = ColumnMatchNullabilityProbabilityFactory.insert("users")
+      refute user.id
+      assert user.name
+    end
+
+    test "module match" do
+      create_table!(:users, [
+        {:add, :id, :string, [null: true]},
+        {:add, :name, :string, [null: true]}
+      ])
+
+      defmodule NullModule do
+        @behaviour Factori.Null
+
+        def null?(%{name: :name}), do: false
+        def null?(%{name: :id}), do: true
+      end
+
+      defmodule ModuleNullabilityProbabilityFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          null?: [NullModule],
+          mappings: [fn _ -> "1" end]
+      end
+
+      ModuleNullabilityProbabilityFactory.bootstrap()
+
+      user = ModuleNullabilityProbabilityFactory.insert("users")
+      refute user.id
+      assert user.name
     end
   end
 end

@@ -148,6 +148,32 @@ test "insert user with overrides" do
 end
 ```
 
+### Null
+
+The `null?` option allows for specifying a list of functions that determine whether a field should be generated with a null value, based on the column’s match.
+If there are no matches, the default behaviour is the nullability of the column. The use case is to have a nullable column in the database but always generate it in the factory.
+
+```elixir
+defmodule MyAppTest.Factory do
+  use Factori,
+    repo: MyApp.Repo,
+    mappings: [Factori.Mapping.Faker],
+    null?: [fn %{name: :first_name} -> false end]
+end
+```
+
+To always generate nullable value, you could have a catch-all function that returns `false` for every columns.
+
+`null?` can also include a module that implement the `null?` function:
+
+```elixir
+defmodule MyAppTest.NullUsers do
+  @behaviour Factori.Null
+
+  def null?(%{table_name: "users", name: :first_name}), do: false
+end
+```
+
 ## Ecto and structs
 
 ```elixir
