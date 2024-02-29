@@ -17,13 +17,12 @@ defmodule Factori.Attributes do
 
   @spec map(
           Factori.Config.t(),
-          fun(),
           String.t(),
           Keyword.t(),
           Factori.Bootstrap.ColumnDefinition.t(),
           boolean()
         ) :: {Keyword.t(), Keyword.t()}
-  def map(config, insert_func, table_name, attrs, source_column, ecto_dump_value?) do
+  def map(config, table_name, attrs, source_column, ecto_dump_value?) do
     columns =
       table_name
       |> config.storage.get(config.storage_name)
@@ -37,30 +36,7 @@ defmodule Factori.Attributes do
 
     db_attrs =
       Enum.reduce(columns, db_attrs, fn column, attrs ->
-        new_value =
-          if column.reference do
-            fn -> fetch_reference(config, insert_func, columns, attrs, column, source_column) end
-          else
-            fn ->
-              value_mapping =
-                Enum.find_value(config.mappings, fn mapping ->
-                  value = find_mapping_value(config.mappings, mapping, column, config.options)
-                  value !== :not_found && {:ok, value}
-                end)
-
-              case value_mapping do
-                {:ok, value} ->
-                  Enum.reduce(config.mappings, value, fn mapping, acc ->
-                    find_transformed_value(mapping, column, acc)
-                  end)
-
-                _ ->
-                  Logger.warning("Can't find a mapping for #{inspect(column)}")
-
-                  nil
-              end
-            end
-          end
+        new_value = reference_or_mapped_value(config, columns, attrs, column, source_column)
 
         value = Keyword.get_lazy(attrs, column.name, new_value)
         value = Enum.reduce(config.mappings, value, &find_transformed_value(&1, column, &2))
@@ -71,7 +47,33 @@ defmodule Factori.Attributes do
     {Enum.uniq(db_attrs), Enum.uniq(struct_attrs)}
   end
 
-  defp fetch_reference(config, insert_func, columns, attrs, column, source_column) do
+  defp reference_or_mapped_value(config, columns, attrs, column, source_column) do
+    if column.reference do
+      fn -> fetch_reference(config, columns, attrs, column, source_column) end
+    else
+      fn ->
+        value_mapping =
+          Enum.find_value(config.mappings, fn mapping ->
+            value = find_mapping_value(config, mapping, column)
+            value !== :not_found && {:ok, value}
+          end)
+
+        case value_mapping do
+          {:ok, value} ->
+            Enum.reduce(config.mappings, value, fn mapping, acc ->
+              find_transformed_value(mapping, column, acc)
+            end)
+
+          _ ->
+            Logger.warning("Can't find a mapping for #{inspect(column)}")
+
+            nil
+        end
+      end
+    end
+  end
+
+  defp fetch_reference(config, columns, attrs, column, source_column) do
     {reference_table_name, reference_column_name} = column.reference
 
     existing_reference_value =
@@ -96,7 +98,7 @@ defmodule Factori.Attributes do
         end
 
       true ->
-        reference = insert_func.(config, reference_table_name, [], column, nil)
+        reference = Factori.insert(config, reference_table_name, [], column, nil)
         Map.get(reference, reference_column_name)
     end
   end
@@ -119,63 +121,45 @@ defmodule Factori.Attributes do
       else: value
   end
 
-  defp find_attributes_mapping(mappings, columns, options) do
+  defp find_attributes_mapping(config, columns) do
     for column <- columns, into: %{} do
-      value_mapping =
-        Enum.find_value(mappings, fn mapping ->
-          value = find_mapping_value(mappings, mapping, column, options)
-          value !== :not_found && {:ok, value}
-        end)
-
-      value_mapping =
-        case value_mapping do
-          {:ok, value} ->
-            Enum.reduce(mappings, value, fn mapping, acc ->
-              find_transformed_value(mapping, column, acc)
-            end)
-
-          _ ->
-            Logger.warning("Can't find a mapping for #{inspect(column)}")
-
-            nil
-        end
-
-      {column.name, value_mapping}
+      new_value = reference_or_mapped_value(config, columns, [], column, nil)
+      {column.name, new_value.()}
     end
   end
 
-  defp maybe_nested_mapping(mappings, options, value) do
+  defp maybe_nested_mapping(config, value) do
     case value do
       {:map, embed_schema, columns} ->
-        attributes = find_attributes_mapping(mappings, columns, options)
-        struct(embed_schema, attributes)
+        attributes = find_attributes_mapping(config, columns)
+        Map.put(attributes, :__struct__, embed_schema)
 
       {:list, embed_schema, columns} ->
-        attributes = find_attributes_mapping(mappings, columns, options)
-        [struct(embed_schema, attributes)]
+        attributes = find_attributes_mapping(config, columns)
+        [Map.put(attributes, :__struct__, embed_schema)]
 
       value ->
         value
     end
   end
 
-  defp find_mapping_value(mappings, mapping, column, options) when is_list(mapping) do
-    maybe_nil(column, options, fn ->
-      maybe_nested_mapping(mappings, options, mapping[:match].(column))
+  defp find_mapping_value(config, mapping, column) when is_list(mapping) do
+    maybe_nil(column, config.options, fn ->
+      maybe_nested_mapping(config, mapping[:match].(column))
     end)
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp find_mapping_value(mappings, mapping, column, options) when is_function(mapping) do
-    maybe_nil(column, options, fn -> maybe_nested_mapping(mappings, options, mapping.(column)) end)
+  defp find_mapping_value(config, mapping, column) when is_function(mapping) do
+    maybe_nil(column, config.options, fn -> maybe_nested_mapping(config, mapping.(column)) end)
   rescue
     FunctionClauseError -> :not_found
   end
 
-  defp find_mapping_value(mappings, module, column, options) when is_atom(module) do
-    maybe_nil(column, options, fn ->
-      maybe_nested_mapping(mappings, options, module.match(column))
+  defp find_mapping_value(config, module, column) when is_atom(module) do
+    maybe_nil(column, config.options, fn ->
+      maybe_nested_mapping(config, module.match(column))
     end)
   rescue
     FunctionClauseError -> :not_found

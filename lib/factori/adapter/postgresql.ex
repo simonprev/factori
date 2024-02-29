@@ -185,8 +185,23 @@ defmodule Factori.Adapter.Postgresql do
   defp generate_embed_columns(_, nil), do: nil
 
   defp generate_embed_columns(table_name, ecto_embed) do
+    references =
+      Enum.map(ecto_embed.ecto_schema.__schema__(:associations), fn association_name ->
+        association = ecto_embed.ecto_schema.__schema__(:association, association_name)
+
+        %Bootstrap.ReferenceDefinition{
+          source: table_name,
+          source_column: association.owner_key,
+          target: association.queryable.__schema__(:source),
+          target_column: association.related_key
+        }
+      end)
+
     fields =
       for field <- ecto_embed.ecto_schema.__schema__(:fields) do
+        field_reference = Enum.find(references, &(&1.source_column === field))
+
+        table_name = if field_reference, do: field_reference.source, else: table_name
         name = to_string(field)
         type = ecto_type_to_embed_value_type(ecto_embed.ecto_schema.__schema__(:type, field))
         nullable = "NO"
@@ -202,7 +217,7 @@ defmodule Factori.Adapter.Postgresql do
           size
         ]
 
-        generate_column_definition(column, [], [], ecto_embed.ecto_schema)
+        generate_column_definition(column, List.wrap(field_reference), [], ecto_embed.ecto_schema)
       end
 
     {ecto_embed.cardinality, ecto_embed.ecto_schema, fields}

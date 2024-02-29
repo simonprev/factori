@@ -3,11 +3,17 @@ defmodule Factori.EctoEmbedsTest do
 
   describe "string table name" do
     test "insert" do
+      Code.ensure_compiled!(UserAddressEmbedSchema)
       Code.ensure_compiled!(UserEmbedSchema)
 
       create_table!(:users_embed, [
         {:add, :associates, :jsonb, [null: false]},
         {:add, :lead, :jsonb, [null: false]}
+      ])
+
+      create_table!(:users_address_embed, [
+        {:add, :id, :integer, [null: false]},
+        {:add, :street, :string, [null: false]}
       ])
 
       defmodule UserTableEmbedsMappingFactory do
@@ -20,6 +26,7 @@ defmodule Factori.EctoEmbedsTest do
 
       user = UserTableEmbedsMappingFactory.insert("users_embed")
 
+      assert Factori.TestRepo.get(UserAddressEmbedSchema, user.lead["address_id"]).street
       assert user.lead["email"]
       assert Enum.at(user.associates, 0)["name"]
       assert is_binary(Enum.at(user.associates, 0)["other_lead"]["inserted_at"])

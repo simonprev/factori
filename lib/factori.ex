@@ -265,7 +265,6 @@ defmodule Factori do
   defp map_attributes(config, table_name, attrs, source_column, ecto_dump_value? \\ true) do
     Attributes.map(
       config,
-      &insert/5,
       table_name,
       List.wrap(attrs),
       source_column,

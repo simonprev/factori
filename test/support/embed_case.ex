@@ -1,3 +1,14 @@
+defmodule UserAddressEmbedSchema do
+  @moduledoc false
+  # Support for Factori.EctoEmbedsTest. Stored in a seperate file to ensure schema
+  # module is registered in :application.get_key(otp_app, :modules)
+  use Ecto.Schema
+
+  schema "users_address_embed" do
+    field(:street, :string)
+  end
+end
+
 defmodule UserEmbedSchema do
   @moduledoc false
   # Support for Factori.EctoEmbedsTest. Stored in a seperate file to ensure schema
@@ -34,6 +45,7 @@ defmodule UserEmbedSchema do
       field(:naive_datetime_usec, :naive_datetime_usec)
       field(:uuid, Ecto.UUID)
       field(:enum, Ecto.Enum, values: ~w(a b c d e f)a)
+      belongs_to(:address, UserAddressEmbedSchema)
     end
   end
 end
