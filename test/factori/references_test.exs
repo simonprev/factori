@@ -158,7 +158,7 @@ defmodule Factori.ReferencesTest do
       end
     end
 
-    test "double reference nil probability fallback" do
+    test "double reference nil null? false" do
       create_table!(:users, [
         {:add, :id, :integer, [primary_key: true, null: false]}
       ])

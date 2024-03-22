@@ -74,7 +74,6 @@ defmodule Factori do
 
   @spec bootstrap(Factori.Config.t()) :: :ok
   def bootstrap(factory_config) do
-    Factori.Bootstrap.init(factory_config)
     Factori.Bootstrap.bootstrap(factory_config)
     :ok
   end

@@ -1,4 +1,5 @@
 defmodule Factori.Adapter.Postgresql do
+  require Logger
   alias Factori.Bootstrap
 
   @columns """
@@ -41,6 +42,16 @@ defmodule Factori.Adapter.Postgresql do
       JOIN pg_enum ON pg_type.oid = pg_enum.enumtypid
       JOIN pg_catalog.pg_namespace ON pg_namespace.oid = pg_type.typnamespace;
   """
+
+  def warn_on_setup(repo) do
+    pool_size = Keyword.get(repo.config, :pool_size)
+
+    if pool_size && pool_size <= 1 do
+      Logger.warning(
+        "#{inspect(repo)} :pool_size option should be greater than 1 to allow bootstraping and running tests concurrently, got: #{pool_size}"
+      )
+    end
+  end
 
   def columns!(repo) do
     references = reference_definitions(repo)

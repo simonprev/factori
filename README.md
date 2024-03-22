@@ -30,22 +30,39 @@ Define your `Factory` module with the repo (typically in `test/support`).
 
 ```elixir
 defmodule MyAppTest.Factory do
-  use Factori, repo: MyApp.Repo, mappings: [Factori.Mapping.Faker]
+  use Factori,
+    repo: MyApp.Repo,
+    mappings: [Factori.Mapping.Enum, Factori.Mapping.Embed, Factori.Mapping.Faker]
 end
 ```
 
 Initialize the module by checking out the `Repo` and boostraping the `Factory`.
 
-This is typically done in `data_case.ex`.
+Given a typical `data_case.ex`:
 
 ```elixir
-setup_all do
-  :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-  Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
+setup tags do
+  setup_sandbox(tags)
 
-  MyApp.Factory.bootstrap()
   :ok
 end
+
+def setup_sandbox(tags) do
+  pid = Ecto.Adapters.SQL.Sandbox.start_owner!(MyApp.Repo, shared: not tags[:async])
+  on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+end
+```
+
+Add this in your `test_helper.exs` so that the bootstrap is only done once:
+
+```elixir
+ExUnit.start()
+
+Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
+MyApp.Factory.bootstrap()
+Ecto.Adapters.SQL.Sandbox.checkin(MyApp.Repo)
+
+Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
 ```
 
 ## Usage
@@ -54,7 +71,7 @@ In a test case, just use your `Factory` module by referencing the table name
 
 ```elixir
 test "insert user" do
-  user = Factory.insert("users")
+  user = MyApp.Factory.insert("users")
   assert user.id
 end
 ```

@@ -98,8 +98,10 @@ defmodule Factori.Attributes do
         end
 
       true ->
-        reference = Factori.insert(config, reference_table_name, [], column, nil)
-        Map.get(reference, reference_column_name)
+        maybe_nil(column, config.null?, fn ->
+          reference = Factori.insert(config, reference_table_name, [], column, nil)
+          Map.get(reference, reference_column_name)
+        end)
     end
   end
 

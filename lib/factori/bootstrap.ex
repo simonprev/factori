@@ -57,11 +57,12 @@ defmodule Factori.Bootstrap do
           }
   end
 
-  @spec init(Factori.Config.t()) :: any()
-  def init(config), do: config.storage.init(config.storage_name)
-
   @spec bootstrap(Factori.Config.t()) :: any()
   def bootstrap(config = %Factori.Config{}) do
+    config.storage.init(config.storage_name)
+
+    config.adapter.warn_on_setup(config.repo)
+
     columns = config.adapter.columns!(config.repo)
     Enum.each(columns, &config.storage.insert(&1, config.storage_name))
   end
