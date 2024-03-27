@@ -26,10 +26,46 @@ defmodule Factori.EctoEmbedsTest do
 
       user = UserTableEmbedsMappingFactory.insert("users_embed")
 
-      assert Factori.TestRepo.get(UserAddressEmbedSchema, user.lead["address_id"]).street
-      assert user.lead["email"]
-      assert Enum.at(user.associates, 0)["name"]
-      assert is_binary(Enum.at(user.associates, 0)["other_lead"]["inserted_at"])
+      assert Factori.TestRepo.get(UserAddressEmbedSchema, user.lead.address_id).street
+      assert user.lead.email
+      assert is_struct(user.lead.naive_datetime, NaiveDateTime)
+      assert is_struct(user.lead.date, Date)
+      assert Enum.at(user.associates, 0).name
+      assert is_struct(Enum.at(user.associates, 0).other_lead.inserted_at, DateTime)
+    end
+
+    test "insert missing mapping" do
+      Code.ensure_compiled!(UserAddressEmbedSchema)
+      Code.ensure_compiled!(UserEmbedSchema)
+
+      create_table!(:users_embed, [
+        {:add, :associates, :jsonb, [null: false]},
+        {:add, :lead, :jsonb, [null: false]},
+        {:add, :deleted_at, :string, [null: true]}
+      ])
+
+      create_table!(:users_address_embed, [
+        {:add, :id, :integer, [null: false]},
+        {:add, :street, :string, [null: false]}
+      ])
+
+      defmodule UserTableEmbedsMissingMappingFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Faker]
+      end
+
+      UserTableEmbedsMissingMappingFactory.bootstrap()
+
+      user = UserTableEmbedsMissingMappingFactory.insert(UserEmbedSchema)
+
+      assert user.__struct__ === UserEmbedSchema
+      assert Enum.at(user.associates, 0).__struct__ === UserEmbedSchema.Associate
+
+      assert Enum.at(user.associates, 0).other_lead.__struct__ ===
+               UserEmbedSchema.Associate.OtherLead
+
+      assert user.lead.__struct__ === UserEmbedSchema.Lead
     end
   end
 

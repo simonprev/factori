@@ -15,7 +15,7 @@ defmodule Factori.EnumTest do
       DbEnumUserFactory.bootstrap()
 
       user = DbEnumUserFactory.insert("simple_users")
-      assert user.type in ["admin", "user"]
+      assert user.type in [:admin, :user]
     end
 
     test "simple override" do
@@ -34,7 +34,7 @@ defmodule Factori.EnumTest do
       DbEnumUserOverrideFactory.bootstrap()
 
       user = DbEnumUserOverrideFactory.insert("simple_override_users", type: "admin")
-      assert user.type === "admin"
+      assert user.type === :admin
     end
 
     test "from schema ecto enum" do
@@ -50,7 +50,7 @@ defmodule Factori.EnumTest do
       EctoEnumUserFactory.bootstrap()
 
       user = EctoEnumUserFactory.insert("users_enum")
-      assert user.type in ["admin", "user"]
+      assert user.type in [:admin, :user]
     end
 
     test "from schema ecto variant enum" do
@@ -68,6 +68,47 @@ defmodule Factori.EnumTest do
 
       user = EctoEnumVariantUserFactory.insert(:user)
       assert user.type in [:admin, :user]
+    end
+
+    test "from ecto missing column in schema mapping" do
+      Code.ensure_compiled!(UserEnumSchema)
+
+      create_table!(:users_enum, [
+        {:add, :type, :string, [null: false]},
+        {:add, :deleted_at, :string, [null: true]}
+      ])
+
+      defmodule EctoEnumMissingMappingFactory do
+        use Factori, repo: Factori.TestRepo, mappings: [Factori.Mapping.Enum]
+      end
+
+      EctoEnumMissingMappingFactory.bootstrap()
+
+      user = EctoEnumMissingMappingFactory.insert(UserEnumSchema)
+      assert user.type in [:admin, :user]
+    end
+
+    test "custom enum mapping" do
+      Code.ensure_compiled!(UserEnumSchema)
+
+      create_table!(:users_enum, [
+        {:add, :type, :string, [null: false]},
+        {:add, :deleted_at, :string, [null: true]}
+      ])
+
+      defmodule EctoEnumCustomMappingFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          mappings: [
+            fn %{name: :type} -> :admin end,
+            Factori.Mapping.Enum
+          ]
+      end
+
+      EctoEnumCustomMappingFactory.bootstrap()
+
+      user = EctoEnumCustomMappingFactory.insert(UserEnumSchema)
+      assert user.type === :admin
     end
 
     test "from schema ecto variant db enum" do

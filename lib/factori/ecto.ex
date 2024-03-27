@@ -54,6 +54,34 @@ defmodule Factori.Ecto do
 
   def load_value(nil, _), do: nil
 
+  def load_value(value, column) when is_list(value),
+    do: Enum.map(value, &load_value(&1, column))
+
+  def load_value(value, %{enum: enum}) when is_struct(enum) do
+    case List.keyfind(enum.mappings, value, 1) do
+      {enum_value, _} -> enum_value
+      _ -> value
+    end
+  end
+
+  def load_value(value, column) when not is_nil(column.struct_embed) do
+    {_, struct_module, key_columns} = column.struct_embed
+
+    values =
+      Enum.map(value, fn {map_key, map_value} ->
+        key_column = Enum.find(key_columns, &(to_string(&1.name) === map_key))
+
+        key_column =
+          if key_column && key_column.ecto_type === Ecto.UUID,
+            do: %{key_column | ecto_type: nil},
+            else: key_column
+
+        {key_column.name, load_value(map_value, key_column)}
+      end)
+
+    struct(struct_module, values)
+  end
+
   def load_value(value, %{ecto_type: Ecto.UUID}) do
     case Ecto.Type.load(Ecto.UUID, value) do
       {:ok, value} -> value
@@ -67,5 +95,32 @@ defmodule Factori.Ecto do
     DateTime.from_naive!(value, "Etc/UTC")
   end
 
-  def load_value(value, _), do: value
+  def load_value(value, %{ecto_type: ecto_type})
+      when ecto_type in ~w(utc_datetime utc_datetime_usec)a and
+             is_binary(value) do
+    case DateTime.from_iso8601(value) do
+      {:ok, datetime, _} -> datetime
+      _ -> value
+    end
+  end
+
+  def load_value(value, %{ecto_type: ecto_type})
+      when ecto_type in ~w(naive_datetime naive_datetime_usec)a and
+             is_binary(value) do
+    case NaiveDateTime.from_iso8601(value) do
+      {:ok, datetime} -> datetime
+      _ -> value
+    end
+  end
+
+  def load_value(value, %{ecto_type: ecto_type})
+      when ecto_type in ~w(date)a and
+             is_binary(value) do
+    case Date.from_iso8601(value) do
+      {:ok, date} -> date
+      _ -> value
+    end
+  end
+
+  def load_value(value, _column), do: value
 end
