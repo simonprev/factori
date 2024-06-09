@@ -44,7 +44,7 @@ defmodule Factori.Adapter.Postgresql do
   """
 
   def warn_on_setup(repo) do
-    pool_size = Keyword.get(repo.config, :pool_size)
+    pool_size = Keyword.get(repo.config(), :pool_size)
 
     if pool_size && pool_size <= 1 do
       Logger.warning(
@@ -257,7 +257,7 @@ defmodule Factori.Adapter.Postgresql do
   end
 
   defp ecto_schemas(repo) do
-    otp_app = Keyword.get(repo.config, :otp_app)
+    otp_app = Keyword.get(repo.config(), :otp_app)
     {:ok, modules} = :application.get_key(otp_app, :modules)
 
     modules
