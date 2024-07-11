@@ -15,7 +15,7 @@ defmodule PostEnumSchema do
   use Ecto.Schema
 
   schema "posts_enum" do
-    field(:status, Ecto.Enum, values: [:draft, :admin])
+    field(:status, Ecto.Enum, values: [draft: "Draft", admin: "Admin"])
   end
 end
 

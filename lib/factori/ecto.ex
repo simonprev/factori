@@ -36,6 +36,10 @@ defmodule Factori.Ecto do
       when enum_name === column_type,
       do: to_string(value)
 
+  def dump_value(value, %{enum: enum}) when is_struct(enum, Factori.Bootstrap.EnumDefinition) do
+    Keyword.get(enum.mappings, value)
+  end
+
   def dump_value(value, column) when column.type === "varchar", do: to_string(value)
   def dump_value(value, column) when column.type === "_varchar", do: to_string(value)
 

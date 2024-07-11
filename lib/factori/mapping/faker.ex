@@ -24,6 +24,7 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "bool"}), do: Enum.random([true, false])
 
   def match(%{type: "text"}), do: Lorem.paragraph(5)
+  def match(%{type: "time", ecto_type: :time}), do: Time.truncate(time(), :second)
   def match(%{type: "time"}), do: time()
   def match(%{type: "date"}), do: date()
   def match(%{type: "char", options: options}), do: varchar(options)

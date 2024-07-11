@@ -167,7 +167,7 @@ defmodule Factori.EnumTest do
     end
 
     test "from schema ecto enum on variant association" do
-      Factori.TestRepo.query!("CREATE TYPE post_status_type AS ENUM ('draft', 'admin')")
+      Factori.TestRepo.query!("CREATE TYPE post_status_type AS ENUM ('Draft', 'Admin')")
 
       Code.ensure_compiled!(UserPostEnumSchema)
       Code.ensure_compiled!(PostEnumSchema)
