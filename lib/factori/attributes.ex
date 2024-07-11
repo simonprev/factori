@@ -77,11 +77,17 @@ defmodule Factori.Attributes do
     {reference_table_name, reference_column_name} = column.reference
 
     existing_reference_value =
-      columns
-      |> Enum.filter(&(&1.reference === column.reference))
-      |> Enum.map(&Keyword.get(attrs, &1.name))
-      |> Enum.reject(&is_nil/1)
-      |> List.first()
+      if Enum.find(config.prevent_reuse_table_references, fn ref ->
+           ref === {column.table_name, reference_table_name}
+         end) do
+        nil
+      else
+        columns
+        |> Enum.filter(&(&1.reference === column.reference))
+        |> Enum.map(&Keyword.get(attrs, &1.name))
+        |> Enum.reject(&is_nil/1)
+        |> List.first()
+      end
 
     cond do
       not is_nil(existing_reference_value) ->

@@ -179,6 +179,23 @@ defmodule MyAppTest.Factory do
 end
 ```
 
+### Reuse table references
+
+By default, `factori` will reuse the same table reference when inserting data *for the same row*. This can be disabled by setting the `prevent_reuse_table_references`. The setting is a list of table pairs that should not reuse the same reference.
+
+In the example, when inserting a post with a owner and an author, the same user will not be used for both columns.
+
+```elixir
+defmodule MyAppTest.Factory do
+  use Factori,
+    repo: MyApp.Repo,
+    mappings: [Factori.Mapping.Faker],
+    prevent_reuse_table_references: [
+      {"posts", "users"}
+    ]
+end
+```
+
 To always generate nullable value, you could have a catch-all function that returns `false` for every columns.
 
 `null?` can also include a module that implement the `null?` function:

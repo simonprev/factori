@@ -102,6 +102,51 @@ defmodule Factori.ReferencesTest do
       assert post.author_id === post.owner_id
     end
 
+    test "do not reuse reference" do
+      create_table!(:noreuse_reference_users, [
+        {:add, :id, :integer, [primary_key: true, null: false]}
+      ])
+
+      author_reference = %Ecto.Migration.Reference{
+        name: :author_id,
+        type: :bigint,
+        table: :noreuse_reference_users
+      }
+
+      owner_reference = %Ecto.Migration.Reference{
+        name: :owner_id,
+        type: :bigint,
+        table: :noreuse_reference_users
+      }
+
+      other_user_reference = %Ecto.Migration.Reference{
+        name: :other_user_id,
+        type: :bigint,
+        table: :noreuse_reference_users
+      }
+
+      create_table!(:noreuse_reference_posts, [
+        {:add, :id, :integer, [primary_key: true, null: false]},
+        {:add, :author_id, author_reference, [null: false]},
+        {:add, :other_user_id, other_user_reference, [null: false]},
+        {:add, :owner_id, owner_reference, [null: false]}
+      ])
+
+      defmodule NoReuseFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          prevent_reuse_table_references: [
+            {"noreuse_reference_posts", "noreuse_reference_users"}
+          ],
+          mappings: [Factori.Mapping.Faker]
+      end
+
+      NoReuseFactory.bootstrap()
+
+      post = NoReuseFactory.insert("noreuse_reference_posts")
+      assert post.author_id !== post.owner_id
+    end
+
     test "nullable override reference" do
       create_table!(:reference_users, [{:add, :id, :integer, [primary_key: true, null: false]}])
 

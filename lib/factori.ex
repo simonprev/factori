@@ -67,6 +67,7 @@ defmodule Factori do
               adapter: nil,
               variants: [],
               mappings: [],
+              prevent_reuse_table_references: [],
               null?: []
 
     @type t :: %__MODULE__{}
@@ -357,6 +358,8 @@ defmodule Factori do
           adapter: unquote(opts[:adapter]) || Factori.Adapter.Postgresql,
           mappings: List.wrap(unquote(opts[:mappings])),
           variants: List.wrap(unquote(opts[:variants])),
+          prevent_reuse_table_references:
+            List.wrap(unquote(opts[:prevent_reuse_table_references])),
           null?: List.wrap(unquote(opts[:null?]))
         }
       end
