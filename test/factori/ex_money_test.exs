@@ -41,7 +41,7 @@ defmodule Factori.ExMoneyTest do
     defmodule ProductFactory do
       use Factori,
         repo: Factori.TestRepo,
-        variants: [{:product, ProductSchema}],
+        variants: [product: ProductSchema, delivery_method: DeliveryMethodSchema],
         mappings: [
           fn
             %{name: :id} -> 1
