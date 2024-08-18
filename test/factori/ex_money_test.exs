@@ -45,8 +45,8 @@ defmodule Factori.ExMoneyTest do
         mappings: [
           fn
             %{name: :id} -> 1
-            # %{name: :price} -> Money.new(:EUR, "420.69")
-            %{type: "money_with_currency"} -> Money.new(:EUR, "420.69")
+            %{table_name: "products", name: :price} -> Money.new(:EUR, "420.69")
+            %{table_name: "delivery_methods", name: :price} -> Money.new(:EUR, "5.00")
           end
         ]
     end
@@ -58,6 +58,6 @@ defmodule Factori.ExMoneyTest do
     assert product.id == 1
     assert product.price == Money.new(:EUR, "420.69")
     assert product.delivery_method_id
-    assert product.delivery_method.price == Money.new(:EUR, "420.69")
+    assert product.delivery_method.price == Money.new(:EUR, "5.00")
   end
 end
