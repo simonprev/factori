@@ -37,8 +37,7 @@ defmodule Factori.Mixfile do
       {:credo_envvar, "~> 0.1", only: [:dev, :test], runtime: false},
       {:credo_naming, "~> 2.0", only: [:dev, :test], runtime: false},
       {:ex_money, "~> 5.15", only: :test},
-      {:ex_money_sql, "~> 1.9", only: :test},
-      {:money, "~> 1.12", only: :test, runtime: false}
+      {:ex_money_sql, "~> 1.9", only: :test}
     ]
   end
 
