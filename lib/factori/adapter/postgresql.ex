@@ -189,6 +189,7 @@ defmodule Factori.Adapter.Postgresql do
     case type do
       type when is_atom(type) -> type
       {:parameterized, type, []} when is_atom(type) -> type
+      {:parameterized, {type, []}} when is_atom(type) -> type
       _ -> nil
     end
   end
