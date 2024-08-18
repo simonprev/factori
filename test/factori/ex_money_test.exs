@@ -1,7 +1,7 @@
 defmodule Factori.ExMoneyTest do
   use Factori.EctoCase, async: true
 
-  test "schema" do
+  test "nested schema" do
     create_table!(:delivery_methods, [
       {:add, :id, :integer, [primary_key: true, null: false]},
       {:add, :price, :money_with_currency, [null: false]}
