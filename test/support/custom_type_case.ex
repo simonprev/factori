@@ -10,3 +10,22 @@ defmodule UserCustomTypeSchema do
     field(:amount, Money.Ecto.Composite.Type)
   end
 end
+
+defmodule DeliveryMethodSchema do
+  use Ecto.Schema
+
+  @primary_key {:id, :integer, []}
+  schema "delivery_methods" do
+    field(:price, Money.Ecto.Composite.Type)
+  end
+end
+
+defmodule ProductSchema do
+  use Ecto.Schema
+
+  @primary_key {:id, :integer, []}
+  schema "products" do
+    field(:price, Money.Ecto.Composite.Type)
+    belongs_to(:delivery_method, DeliveryMethodSchema)
+  end
+end
