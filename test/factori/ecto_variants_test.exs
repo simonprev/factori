@@ -287,7 +287,7 @@ defmodule Factori.EctoVariantsTest do
       create_table!(:users, [
         {:add, :id, :string, [size: 1, null: false]},
         {:add, :uuid_slug, :uuid, [null: false]},
-        {:add, :amount, :integer, [null: false]}
+        {:add, :amount, :money_with_currency, [null: false]}
       ])
 
       defmodule UserCustomTypeFactory do
