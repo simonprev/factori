@@ -7,6 +7,6 @@ defmodule UserCustomTypeSchema do
   @primary_key {:id, :string, []}
   schema "users" do
     field(:uuid_slug, Ecto.UUID)
-    field(:amount, Money.Ecto.Amount.Type)
+    field(:amount, Money.Ecto.Composite.Type)
   end
 end
