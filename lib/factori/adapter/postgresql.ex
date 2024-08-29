@@ -117,7 +117,8 @@ defmodule Factori.Adapter.Postgresql do
     ecto_enum =
       with schema when not is_nil(schema) <- ecto_schema,
            true <- identifier in fields,
-           {:parameterized, Ecto.Enum, _} <- ecto_schema.__schema__(:type, identifier) do
+           {:parameterized, {Ecto.Enum, _}} <-
+             normalize_enum_definition(ecto_schema.__schema__(:type, identifier)) do
         %Bootstrap.EnumDefinition{
           name: name,
           mappings: Ecto.Enum.mappings(ecto_schema, identifier)
@@ -184,7 +185,13 @@ defmodule Factori.Adapter.Postgresql do
     }
   end
 
-  @spec assured_atom_or_parameterized_type(term()) :: atom() | module()
+  defp normalize_enum_definition(type) do
+    case type do
+      {:parameterized, type, enum} -> {:parameterized, {type, enum}}
+      type -> type
+    end
+  end
+
   defp assured_atom_or_parameterized_type(type) do
     case type do
       type when is_atom(type) -> type
