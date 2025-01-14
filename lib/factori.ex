@@ -139,6 +139,7 @@ defmodule Factori do
   def insert(config, table_name, struct_module \\ nil, attrs \\ nil, source_column \\ nil)
 
   def insert(config, variant, attrs, source_column, _) when is_atom(variant) do
+    attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
     found_variant = find_variant(config.variants, variant)
     Variant.insert(config, found_variant, variant, attrs, source_column)
   end
@@ -148,6 +149,7 @@ defmodule Factori do
     if Variant.ecto_schema_module_source!(struct_module) do
       ensure_valid_table_name!(config, table_name)
 
+      attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
       {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column, false)
 
       data = hd(insert_all_struct(config, struct_module, [db_attrs]))
@@ -164,6 +166,7 @@ defmodule Factori do
   def insert(config, table_name, attrs, source_column, _) do
     ensure_valid_table_name!(config, table_name)
 
+    attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
     {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column)
 
     data = hd(insert_all(config, table_name, [db_attrs]))
@@ -175,6 +178,7 @@ defmodule Factori do
 
   def build(config, variant, attrs, source_column, _) when is_atom(variant) do
     found_variant = find_variant(config.variants, variant)
+    attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
     Variant.build(config, found_variant, variant, attrs, source_column)
   end
 
@@ -183,6 +187,7 @@ defmodule Factori do
     if Variant.ecto_schema_module_source!(struct_module) do
       ensure_valid_table_name!(config, table_name)
 
+      attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
       {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column, false)
       Map.merge(Enum.into(db_attrs, %{}), Enum.into(struct_attrs, %{}))
     else
@@ -196,12 +201,14 @@ defmodule Factori do
   def build(config, table_name, attrs, source_column, _) do
     ensure_valid_table_name!(config, table_name)
 
+    attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
     {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column)
     Map.merge(Enum.into(db_attrs, %{}), Enum.into(struct_attrs, %{}))
   end
 
   def seed(config, variant, count, attrs, source_column, _) when is_atom(variant) do
     found_variant = find_variant(config.variants, variant)
+    attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
     Variant.seed(config, found_variant, variant, count, attrs, source_column)
   end
 
@@ -210,6 +217,8 @@ defmodule Factori do
     if Variant.ecto_schema_module_source!(struct_module) do
       ensure_valid_table_name!(config, table_name)
       parent = self()
+
+      attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
 
       data =
         for _ <- 1..count,
@@ -234,6 +243,8 @@ defmodule Factori do
   def seed(config, table_name, count, attrs, source_column, _) do
     ensure_valid_table_name!(config, table_name)
     parent = self()
+
+    attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
 
     data =
       for _ <- 1..count,

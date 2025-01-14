@@ -307,6 +307,40 @@ defmodule Factori.EctoVariantsTest do
       assert user.amount === Money.new(100, :USD)
     end
 
+    test "schema json map" do
+      create_table!(:users, [
+        {:add, :id, :string, [size: 1, null: false]},
+        {:add, :data, :jsonb, [null: false]}
+      ])
+
+      defmodule UserJSONMapSchema do
+        use Ecto.Schema
+
+        @primary_key {:id, :string, []}
+        schema "users" do
+          field(:data, :map)
+        end
+      end
+
+      defmodule UserJSONMapFactory do
+        use Factori,
+          repo: Factori.TestRepo,
+          variants: [{:user, UserJSONMapSchema}],
+          mappings: [
+            fn
+              %{name: :id} -> "1"
+            end
+          ]
+      end
+
+      UserJSONMapFactory.bootstrap()
+
+      named = UserJSONMapFactory.insert(:user, %{data: %{"foo" => "test"}})
+      assert named.__struct__ === UserJSONMapSchema
+      assert named.id === "1"
+      assert named.data === %{"foo" => "test"}
+    end
+
     test "schema virtual overrides" do
       create_table!(:users, [
         {:add, :id, :string, [size: 1, null: false]},

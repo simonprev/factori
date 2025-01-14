@@ -91,6 +91,8 @@ defmodule Factori.Variant do
   end
 
   defp validate_struct_attrs!(struct_module, attrs) do
+    attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
+
     invalid_attrs =
       attrs
       |> List.wrap()
