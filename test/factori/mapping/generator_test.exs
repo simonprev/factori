@@ -1,6 +1,8 @@
 defmodule Factori.Mapping.GeneratorTest do
   use Factori.EctoCase, async: true
 
+  alias Factori.Mapping.Generator
+
   describe "generator" do
     test "limit" do
       create_table!(:users, [
@@ -12,7 +14,7 @@ defmodule Factori.Mapping.GeneratorTest do
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users"}],
-          mappings: [Factori.Mapping.Generator]
+          mappings: [Generator]
       end
 
       LimitFactory.bootstrap()
@@ -47,7 +49,7 @@ defmodule Factori.Mapping.GeneratorTest do
         @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Generator]
+          mappings: [Generator]
       end
 
       TypesFactory.bootstrap()

@@ -1,6 +1,9 @@
 defmodule Factori.EctoEmbedsTest do
   use Factori.EctoCase, async: true
 
+  alias Factori.Mapping.Embed
+  alias Factori.Mapping.Generator
+
   describe "string table name" do
     test "insert" do
       Code.ensure_compiled!(UserAddressEmbedSchema)
@@ -20,7 +23,7 @@ defmodule Factori.EctoEmbedsTest do
         @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Generator]
+          mappings: [Embed, Factori.Mapping.Enum, Generator]
       end
 
       UserTableEmbedsMappingFactory.bootstrap()
@@ -54,7 +57,7 @@ defmodule Factori.EctoEmbedsTest do
         @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Generator]
+          mappings: [Embed, Factori.Mapping.Enum, Generator]
       end
 
       UserTableEmbedsMissingMappingFactory.bootstrap()
@@ -90,7 +93,7 @@ defmodule Factori.EctoEmbedsTest do
         @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Generator]
+          mappings: [Embed, Factori.Mapping.Enum, Generator]
       end
 
       UserEmbedsMappingFactory.bootstrap()
