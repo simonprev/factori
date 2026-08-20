@@ -29,22 +29,35 @@ defmodule Factori.Attributes do
       |> Enum.reject(& &1.options.ignore)
       |> Enum.sort_by(&((&1.reference && 1) || 0))
 
+    # O(1) membership test for column names instead of Enum.find per attr.
+    column_names = MapSet.new(columns, & &1.name)
+
     {db_attrs, struct_attrs} =
-      Enum.split_with(attrs, fn {attr, _} ->
-        Enum.find(columns, &(&1.name === attr))
-      end)
+      Enum.split_with(attrs, fn {attr, _} -> MapSet.member?(column_names, attr) end)
 
-    db_attrs =
-      Enum.reduce(columns, db_attrs, fn column, attrs ->
-        new_value = reference_or_mapped_value(config, columns, attrs, column, source_column)
+    # Accumulate into a map for O(1) lookups (references read sibling values),
+    # then rebuild the keyword list in column order at the end. Avoids the
+    # O(n^2) Keyword.get/put + Enum.uniq over a growing keyword list.
+    initial = Map.new(db_attrs)
 
-        value = Keyword.get_lazy(attrs, column.name, new_value)
+    acc =
+      Enum.reduce(columns, initial, fn column, acc ->
+        value =
+          if is_map_key(acc, column.name) do
+            Map.fetch!(acc, column.name)
+          else
+            fun = reference_or_mapped_value(config, columns, acc, column, source_column)
+            fun.()
+          end
+
         value = Enum.reduce(config.mappings, value, &find_transformed_value(&1, column, &2))
         value = if ecto_dump_value?, do: Factori.Ecto.dump_value(value, column), else: value
-        Keyword.put(attrs, column.name, value)
+        Map.put(acc, column.name, value)
       end)
 
-    {Enum.uniq(db_attrs), Enum.uniq(struct_attrs)}
+    db_attrs = Enum.map(columns, fn column -> {column.name, Map.fetch!(acc, column.name)} end)
+
+    {db_attrs, Enum.uniq(struct_attrs)}
   end
 
   defp reference_or_mapped_value(config, columns, attrs, column, source_column) do
@@ -84,7 +97,7 @@ defmodule Factori.Attributes do
       else
         columns
         |> Enum.filter(&(&1.reference === column.reference))
-        |> Enum.map(&Keyword.get(attrs, &1.name))
+        |> Enum.map(&Map.get(attrs, &1.name))
         |> Enum.reject(&is_nil/1)
         |> List.first()
       end
@@ -131,7 +144,7 @@ defmodule Factori.Attributes do
 
   defp find_attributes_mapping(config, columns) do
     for column <- columns, into: %{} do
-      new_value = reference_or_mapped_value(config, columns, [], column, nil)
+      new_value = reference_or_mapped_value(config, columns, %{}, column, nil)
       {column.name, new_value.()}
     end
   end

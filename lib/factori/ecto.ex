@@ -45,16 +45,40 @@ defmodule Factori.Ecto do
 
   def dump_value(value, %{ecto_type: ecto_type_module})
       when is_atom(ecto_type_module) do
-    with {:module, ecto_type_module} <- Code.ensure_loaded(ecto_type_module),
-         true <- function_exported?(ecto_type_module, :dump, 1),
-         {:ok, value} <- Ecto.Type.dump(ecto_type_module, value) do
-      value
+    if dumpable_type?(ecto_type_module) do
+      case Ecto.Type.dump(ecto_type_module, value) do
+        {:ok, value} -> value
+        _ -> value
+      end
     else
-      _ -> value
+      value
     end
   end
 
   def dump_value(value, _), do: value
+
+  # Whether an ecto_type atom names a module exporting dump/1.
+  # The result never changes for a given atom, so cache it in :persistent_term
+  # to avoid a code-server round trip (Code.ensure_loaded/function_exported?)
+  # on every column of every build/insert.
+  defp dumpable_type?(nil), do: false
+
+  defp dumpable_type?(type) do
+    key = {__MODULE__, :dumpable, type}
+
+    case :persistent_term.get(key, :unknown) do
+      :unknown ->
+        result =
+          match?({:module, _}, Code.ensure_loaded(type)) and
+            function_exported?(type, :dump, 1)
+
+        :persistent_term.put(key, result)
+        result
+
+      result ->
+        result
+    end
+  end
 
   def load_value(nil, _), do: nil
 
