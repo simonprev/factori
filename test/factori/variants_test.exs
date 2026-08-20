@@ -4,6 +4,7 @@ defmodule Factori.VariantsTest do
   describe "variants" do
     test "unknown" do
       defmodule UnknownFactory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo
       end
 
@@ -14,9 +15,11 @@ defmodule Factori.VariantsTest do
 
     test "invalid schema" do
       defmodule InvalidModule do
+        @moduledoc false
       end
 
       defmodule InvalidFactory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo, variants: [{:invalid_variant_name, InvalidModule}]
       end
 
@@ -29,6 +32,7 @@ defmodule Factori.VariantsTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users"}],
@@ -47,6 +51,7 @@ defmodule Factori.VariantsTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users", id: "3"}],
@@ -65,6 +70,7 @@ defmodule Factori.VariantsTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserInvalidOverrideFactory do
+        @moduledoc false
         use Factori,
           variants: [{:user, "users"}],
           repo: Factori.TestRepo,
@@ -86,6 +92,7 @@ defmodule Factori.VariantsTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule ListUserOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users", id: "3"}],

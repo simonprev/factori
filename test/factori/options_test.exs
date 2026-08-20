@@ -9,6 +9,7 @@ defmodule Factori.OptionsTest do
       ])
 
       defmodule DefaultNullabilityFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [fn _ -> "name" end]
@@ -25,6 +26,7 @@ defmodule Factori.OptionsTest do
       create_table!(:users, [{:add, :id, :string, [null: true]}])
 
       defmodule NeverNullabilityFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           null?: [fn _ -> true end],
@@ -41,6 +43,7 @@ defmodule Factori.OptionsTest do
       create_table!(:users, [{:add, :id, :string, [null: true]}])
 
       defmodule AlwaysNullabilityProbabilityFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           null?: [fn _ -> false end],
@@ -60,6 +63,7 @@ defmodule Factori.OptionsTest do
       ])
 
       defmodule ColumnMatchNullabilityProbabilityFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           null?: [
@@ -83,6 +87,7 @@ defmodule Factori.OptionsTest do
       ])
 
       defmodule NullModule do
+        @moduledoc false
         @behaviour Factori.Null
 
         def null?(%{name: :name}), do: false
@@ -90,6 +95,7 @@ defmodule Factori.OptionsTest do
       end
 
       defmodule ModuleNullabilityProbabilityFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           null?: [NullModule],

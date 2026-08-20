@@ -1,10 +1,12 @@
 defmodule Factori do
+  @moduledoc false
   alias Factori.Attributes
   alias Factori.Variant
 
   @insert_all_chunk 1000
 
   defmodule UndefinedVariantError do
+    @moduledoc false
     defexception [:name, :variants]
 
     @impl true
@@ -25,6 +27,7 @@ defmodule Factori do
   end
 
   defmodule UndefinedTableError do
+    @moduledoc false
     defexception [:name]
 
     @impl true
@@ -36,6 +39,7 @@ defmodule Factori do
   end
 
   defmodule InvalidSchemaError do
+    @moduledoc false
     defexception [:schema, :name]
 
     @impl true
@@ -49,6 +53,7 @@ defmodule Factori do
   end
 
   defmodule InvalidAttributeError do
+    @moduledoc false
     defexception [:schema, :attributes]
 
     @impl true
@@ -61,6 +66,7 @@ defmodule Factori do
   end
 
   defmodule Config do
+    @moduledoc false
     defstruct storage_name: nil,
               storage: nil,
               repo: nil,
@@ -79,14 +85,7 @@ defmodule Factori do
     :ok
   end
 
-  def insert_list(
-        config,
-        table_name,
-        count,
-        struct_module \\ nil,
-        attrs \\ nil,
-        source_column \\ nil
-      )
+  def insert_list(config, table_name, count, struct_module \\ nil, attrs \\ nil, source_column \\ nil)
 
   def insert_list(config, variant, count, attrs, source_column, _) when is_atom(variant) do
     found_variant = find_variant(config.variants, variant)
@@ -109,7 +108,7 @@ defmodule Factori do
       |> insert_all_struct(struct_module, db_attrs)
       |> Enum.zip(data)
       |> Enum.map(fn {row, {_, struct_attrs}} ->
-        Map.merge(row, Enum.into(struct_attrs, %{}))
+        Map.merge(row, Map.new(struct_attrs))
       end)
     else
       data = insert_list(config, table_name, count, attrs, source_column, struct_module)
@@ -132,7 +131,7 @@ defmodule Factori do
     |> insert_all(table_name, db_attrs)
     |> Enum.zip(data)
     |> Enum.map(fn {row, {_, struct_attrs}} ->
-      Map.merge(row, Enum.into(struct_attrs, %{}))
+      Map.merge(row, Map.new(struct_attrs))
     end)
   end
 
@@ -154,7 +153,7 @@ defmodule Factori do
 
       data = hd(insert_all_struct(config, struct_module, [db_attrs]))
 
-      Map.merge(data, Enum.into(struct_attrs, %{}))
+      Map.merge(data, Map.new(struct_attrs))
     else
       struct(
         struct_module,
@@ -171,7 +170,7 @@ defmodule Factori do
 
     data = hd(insert_all(config, table_name, [db_attrs]))
 
-    Map.merge(data, Enum.into(struct_attrs, %{}))
+    Map.merge(data, Map.new(struct_attrs))
   end
 
   def build(config, table_name, struct_module \\ nil, attrs \\ nil, source_column \\ nil)
@@ -189,7 +188,7 @@ defmodule Factori do
 
       attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
       {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column, false)
-      Map.merge(Enum.into(db_attrs, %{}), Enum.into(struct_attrs, %{}))
+      Map.merge(Map.new(db_attrs), Map.new(struct_attrs))
     else
       struct(
         struct_module,
@@ -203,7 +202,7 @@ defmodule Factori do
 
     attrs = if is_map(attrs), do: Map.to_list(attrs), else: attrs
     {db_attrs, struct_attrs} = map_attributes(config, table_name, attrs, source_column)
-    Map.merge(Enum.into(db_attrs, %{}), Enum.into(struct_attrs, %{}))
+    Map.merge(Map.new(db_attrs), Map.new(struct_attrs))
   end
 
   def seed(config, variant, count, attrs, source_column, _) when is_atom(variant) do
@@ -369,8 +368,7 @@ defmodule Factori do
           adapter: unquote(opts[:adapter]) || Factori.Adapter.Postgresql,
           mappings: List.wrap(unquote(opts[:mappings])),
           variants: List.wrap(unquote(opts[:variants])),
-          prevent_reuse_table_references:
-            List.wrap(unquote(opts[:prevent_reuse_table_references])),
+          prevent_reuse_table_references: List.wrap(unquote(opts[:prevent_reuse_table_references])),
           null?: List.wrap(unquote(opts[:null?]))
         }
       end
@@ -388,13 +386,7 @@ defmodule Factori do
         keys_to_string(data)
       end
 
-      def insert_list(
-            table_name,
-            count \\ 1,
-            struct_module \\ nil,
-            attrs \\ nil,
-            source_column \\ nil
-          )
+      def insert_list(table_name, count \\ 1, struct_module \\ nil, attrs \\ nil, source_column \\ nil)
           when is_integer(count) do
         Factori.insert_list(config(), table_name, count, struct_module, attrs, source_column)
       end
@@ -403,22 +395,13 @@ defmodule Factori do
         Map.new(json, &reduce_keys_to_string/1)
       end
 
-      defp reduce_keys_to_string({key, val}) when is_map(val),
-        do: {to_string(key), keys_to_string(val)}
+      defp reduce_keys_to_string({key, val}) when is_map(val), do: {to_string(key), keys_to_string(val)}
 
-      defp reduce_keys_to_string({key, val}) when is_list(val),
-        do: {to_string(key), Enum.map(val, &keys_to_string(&1))}
+      defp reduce_keys_to_string({key, val}) when is_list(val), do: {to_string(key), Enum.map(val, &keys_to_string(&1))}
 
       defp reduce_keys_to_string({key, val}), do: {to_string(key), val}
 
-      def seed(
-            table_name,
-            count \\ 1,
-            struct_module \\ nil,
-            attrs \\ nil,
-            source_column \\ nil
-          )
-          when is_integer(count) do
+      def seed(table_name, count \\ 1, struct_module \\ nil, attrs \\ nil, source_column \\ nil) when is_integer(count) do
         Factori.seed(config(), table_name, count, struct_module, attrs, source_column)
       end
 

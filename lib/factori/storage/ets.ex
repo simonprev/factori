@@ -1,4 +1,5 @@
 defmodule Factori.Storage.ETS do
+  @moduledoc false
   @behaviour Factori.Storage
 
   alias :ets, as: ETS

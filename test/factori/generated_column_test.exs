@@ -10,6 +10,7 @@ defmodule Factori.GeneratedColumnTest do
       """)
 
       defmodule EctoGeneratedColumnUserFactory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo
       end
 

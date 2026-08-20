@@ -7,6 +7,7 @@ defmodule Factori.EnumTest do
       create_table!(:simple_users, [{:add, :type, :simple_user_type, [null: false]}])
 
       defmodule DbEnumUserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [Factori.Mapping.Enum]
@@ -26,6 +27,7 @@ defmodule Factori.EnumTest do
       ])
 
       defmodule DbEnumUserOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [Factori.Mapping.Enum]
@@ -42,6 +44,7 @@ defmodule Factori.EnumTest do
       create_table!(:users_enum, [{:add, :type, :string, [null: false]}])
 
       defmodule EctoEnumUserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [Factori.Mapping.Enum]
@@ -58,6 +61,7 @@ defmodule Factori.EnumTest do
       create_table!(:users_enum, [{:add, :type, :string, [null: false]}])
 
       defmodule EctoEnumVariantUserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [Factori.Mapping.Enum],
@@ -79,6 +83,7 @@ defmodule Factori.EnumTest do
       ])
 
       defmodule EctoEnumMissingMappingFactory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo, mappings: [Factori.Mapping.Enum]
       end
 
@@ -97,6 +102,7 @@ defmodule Factori.EnumTest do
       ])
 
       defmodule EctoEnumCustomMappingFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -117,6 +123,7 @@ defmodule Factori.EnumTest do
       create_table!(:users_enum, [{:add, :type, :simple_user_db_type, [null: false]}])
 
       defmodule EctoDbEnumVariantUserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [Factori.Mapping.Enum],
@@ -134,6 +141,7 @@ defmodule Factori.EnumTest do
       create_table!(:users_enum, [{:add, :type, :string, [null: false]}])
 
       defmodule EctoEnumUserVariantDumpFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [Factori.Mapping.Enum],
@@ -154,6 +162,7 @@ defmodule Factori.EnumTest do
       create_table!(:users_enum, [{:add, :type, :string, [null: false]}])
 
       defmodule EctoEnumUserVariantFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [Factori.Mapping.Enum],
@@ -188,6 +197,7 @@ defmodule Factori.EnumTest do
       ])
 
       defmodule EctoEnumUserReferenceVariantFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [Factori.Mapping.Enum, fn %{name: :id} -> 1 end],

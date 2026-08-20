@@ -1,13 +1,16 @@
 defmodule Factori.ReferencesTest do
   use Factori.EctoCase, async: true
 
+  alias Ecto.Migration.Reference
   alias Factori.TestRepo, as: Repo
 
   describe "references" do
     test "reference" do
+      import Ecto.Query
+
       create_table!(:reference_users, [{:add, :id, :integer, [primary_key: true, null: false]}])
 
-      reference = %Ecto.Migration.Reference{
+      reference = %Reference{
         name: :author_id,
         type: :bigint,
         table: :reference_users
@@ -16,16 +19,16 @@ defmodule Factori.ReferencesTest do
       create_table!(:reference_posts, [{:add, :author_id, reference, [null: false]}])
 
       defmodule ReferenceFactory do
+        @moduledoc false
         use Factori,
-          repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Faker]
+          repo: Repo,
+          mappings: [Factori.Mapping.Generator]
       end
 
       ReferenceFactory.bootstrap()
 
       post = ReferenceFactory.insert("reference_posts")
 
-      import Ecto.Query
       [%{id: user_id}] = Repo.all(from("reference_users", select: [:id]))
 
       assert post.author_id === user_id
@@ -34,7 +37,7 @@ defmodule Factori.ReferencesTest do
     test "list reference" do
       create_table!(:reference_users, [{:add, :id, :integer, [primary_key: true, null: false]}])
 
-      reference = %Ecto.Migration.Reference{
+      reference = %Reference{
         name: :author_id,
         type: :bigint,
         table: :reference_users
@@ -43,17 +46,17 @@ defmodule Factori.ReferencesTest do
       create_table!(:reference_posts, [{:add, :author_id, reference, [null: false]}])
 
       defmodule ListReferenceFactory do
+        @moduledoc false
         use Factori,
-          repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Faker]
+          repo: Repo,
+          mappings: [Factori.Mapping.Generator]
       end
 
       ListReferenceFactory.bootstrap()
 
       [post_1, post_2] = ListReferenceFactory.insert_list("reference_posts", 2)
 
-      user_ids =
-        List.flatten(Factori.TestRepo.query!("select id from reference_users limit 2").rows)
+      user_ids = List.flatten(Repo.query!("select id from reference_users limit 2").rows)
 
       assert post_1.author_id !== post_2.author_id
       assert post_1.author_id in user_ids
@@ -65,19 +68,19 @@ defmodule Factori.ReferencesTest do
         {:add, :id, :integer, [primary_key: true, null: false]}
       ])
 
-      author_reference = %Ecto.Migration.Reference{
+      author_reference = %Reference{
         name: :author_id,
         type: :bigint,
         table: :reuse_reference_users
       }
 
-      owner_reference = %Ecto.Migration.Reference{
+      owner_reference = %Reference{
         name: :owner_id,
         type: :bigint,
         table: :reuse_reference_users
       }
 
-      other_user_reference = %Ecto.Migration.Reference{
+      other_user_reference = %Reference{
         name: :other_user_id,
         type: :bigint,
         table: :reuse_reference_users
@@ -91,9 +94,10 @@ defmodule Factori.ReferencesTest do
       ])
 
       defmodule ReuseFactory do
+        @moduledoc false
         use Factori,
-          repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Faker]
+          repo: Repo,
+          mappings: [Factori.Mapping.Generator]
       end
 
       ReuseFactory.bootstrap()
@@ -107,19 +111,19 @@ defmodule Factori.ReferencesTest do
         {:add, :id, :integer, [primary_key: true, null: false]}
       ])
 
-      author_reference = %Ecto.Migration.Reference{
+      author_reference = %Reference{
         name: :author_id,
         type: :bigint,
         table: :noreuse_reference_users
       }
 
-      owner_reference = %Ecto.Migration.Reference{
+      owner_reference = %Reference{
         name: :owner_id,
         type: :bigint,
         table: :noreuse_reference_users
       }
 
-      other_user_reference = %Ecto.Migration.Reference{
+      other_user_reference = %Reference{
         name: :other_user_id,
         type: :bigint,
         table: :noreuse_reference_users
@@ -133,12 +137,13 @@ defmodule Factori.ReferencesTest do
       ])
 
       defmodule NoReuseFactory do
+        @moduledoc false
         use Factori,
-          repo: Factori.TestRepo,
+          repo: Repo,
           prevent_reuse_table_references: [
             {"noreuse_reference_posts", "noreuse_reference_users"}
           ],
-          mappings: [Factori.Mapping.Faker]
+          mappings: [Factori.Mapping.Generator]
       end
 
       NoReuseFactory.bootstrap()
@@ -150,7 +155,7 @@ defmodule Factori.ReferencesTest do
     test "nullable override reference" do
       create_table!(:reference_users, [{:add, :id, :integer, [primary_key: true, null: false]}])
 
-      reference = %Ecto.Migration.Reference{
+      reference = %Reference{
         name: :author_id,
         type: :bigint,
         table: :reference_users
@@ -159,9 +164,10 @@ defmodule Factori.ReferencesTest do
       create_table!(:reference_posts, [{:add, :author_id, reference, [null: true]}])
 
       defmodule NullableOverrideReferenceFactory do
+        @moduledoc false
         use Factori,
-          repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Faker]
+          repo: Repo,
+          mappings: [Factori.Mapping.Generator]
       end
 
       NullableOverrideReferenceFactory.bootstrap()
@@ -175,14 +181,14 @@ defmodule Factori.ReferencesTest do
         {:add, :id, :integer, [primary_key: true, null: false]}
       ])
 
-      user_reference = %Ecto.Migration.Reference{name: :author_id, type: :bigint, table: :users}
+      user_reference = %Reference{name: :author_id, type: :bigint, table: :users}
 
       create_table!(:posts, [
         {:add, :id, :integer, [primary_key: true, null: false]},
         {:add, :author_id, user_reference, [null: false]}
       ])
 
-      post_reference = %Ecto.Migration.Reference{
+      post_reference = %Reference{
         name: :last_post_id,
         type: :bigint,
         table: :posts
@@ -191,9 +197,10 @@ defmodule Factori.ReferencesTest do
       alter_table!(:users, [{:add, :last_post_id, post_reference, [null: false]}])
 
       defmodule DoubleFactory do
+        @moduledoc false
         use Factori,
-          repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Faker]
+          repo: Repo,
+          mappings: [Factori.Mapping.Generator]
       end
 
       DoubleFactory.bootstrap()
@@ -208,14 +215,14 @@ defmodule Factori.ReferencesTest do
         {:add, :id, :integer, [primary_key: true, null: false]}
       ])
 
-      user_reference = %Ecto.Migration.Reference{name: :author_id, type: :bigint, table: :users}
+      user_reference = %Reference{name: :author_id, type: :bigint, table: :users}
 
       create_table!(:posts, [
         {:add, :id, :integer, [primary_key: true, null: false]},
         {:add, :author_id, user_reference, [null: true]}
       ])
 
-      post_reference = %Ecto.Migration.Reference{
+      post_reference = %Reference{
         name: :last_post_id,
         type: :bigint,
         table: :posts
@@ -224,9 +231,10 @@ defmodule Factori.ReferencesTest do
       alter_table!(:users, [{:add, :last_post_id, post_reference, [null: false]}])
 
       defmodule DoubleFactoryFallback do
+        @moduledoc false
         use Factori,
-          repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Faker],
+          repo: Repo,
+          mappings: [Factori.Mapping.Generator],
           null?: [fn _ -> false end]
       end
 

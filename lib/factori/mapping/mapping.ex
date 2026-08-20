@@ -1,4 +1,5 @@
 defmodule Factori.Mapping do
+  @moduledoc false
   @callback match(map()) :: any()
   @callback transform(map(), term()) :: term()
 

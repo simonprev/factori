@@ -5,7 +5,7 @@ defmodule Factori.Mixfile do
     [
       app: :factori,
       version: "0.16.1",
-      elixir: ">= 1.12.0",
+      elixir: ">= 1.18.0",
       description: "Test factories generated from database schema",
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
@@ -24,11 +24,10 @@ defmodule Factori.Mixfile do
 
   defp deps do
     [
-      {:faker, "~> 0.16"},
       {:ecto, "~> 3.0"},
       {:ecto_sql, "~> 3.0"},
       {:ex_doc, "~> 0.14", only: :dev},
-      {:earmark, ">= 0.0.0", only: :dev},
+      {:mdex, ">= 0.0.0", only: :dev},
       {:jason, "~> 1.0", only: [:dev, :test]},
       {:postgrex, "~> 0.14", only: :test},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
@@ -36,7 +35,8 @@ defmodule Factori.Mixfile do
       {:credo, "~> 1.1", only: [:dev, :test], override: true},
       {:credo_envvar, "~> 0.1", only: [:dev, :test], runtime: false},
       {:credo_naming, "~> 2.0", only: [:dev, :test], runtime: false},
-      {:money, "~> 1.12", only: :test, runtime: false}
+      {:money, "~> 1.12", only: :test, runtime: false},
+      {:styler, "~> 1.0", only: [:test, :dev], runtime: false}
     ]
   end
 

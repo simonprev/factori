@@ -1,17 +1,18 @@
-defmodule Factori.Mapping.FakerTest do
+defmodule Factori.Mapping.GeneratorTest do
   use Factori.EctoCase, async: true
 
-  describe "faker" do
+  describe "generator" do
     test "limit" do
       create_table!(:users, [
         {:add, :name, :string, [size: 1, null: false]}
       ])
 
       defmodule LimitFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users"}],
-          mappings: [Factori.Mapping.Faker]
+          mappings: [Factori.Mapping.Generator]
       end
 
       LimitFactory.bootstrap()
@@ -43,9 +44,10 @@ defmodule Factori.Mapping.FakerTest do
       create_table!(:users, columns)
 
       defmodule TypesFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Faker]
+          mappings: [Factori.Mapping.Generator]
       end
 
       TypesFactory.bootstrap()

@@ -6,6 +6,7 @@ defmodule Factori.WarnOnSetupTest do
   describe "pool_size" do
     test "less than 1" do
       defmodule PoolSize1Factory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo
       end
 

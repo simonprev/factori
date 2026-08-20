@@ -1,4 +1,5 @@
 defmodule Factori.Mapping.Embed do
+  @moduledoc false
   @behaviour Factori.Mapping
 
   def match(%{struct_embed: {:one, embed_schema, columns}}) do

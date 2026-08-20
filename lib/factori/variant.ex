@@ -1,4 +1,5 @@
 defmodule Factori.Variant do
+  @moduledoc false
   def insert(config, variant, variant_name, attrs, source_column) do
     case parse_arguments(variant, variant_name, attrs) do
       {:table_name, {table_name, attrs}} ->

@@ -6,6 +6,7 @@ defmodule Factori.BuildTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule ParamsUserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -23,6 +24,7 @@ defmodule Factori.BuildTest do
   describe "build" do
     test "unknown" do
       defmodule UnknownFactory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo
       end
 
@@ -33,9 +35,11 @@ defmodule Factori.BuildTest do
 
     test "invalid schema" do
       defmodule InvalidModule do
+        @moduledoc false
       end
 
       defmodule InvalidFactory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo, variants: [{:invalid_variant_name, InvalidModule}]
       end
 
@@ -48,6 +52,7 @@ defmodule Factori.BuildTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule TableUserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -65,6 +70,7 @@ defmodule Factori.BuildTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users"}],
@@ -83,6 +89,7 @@ defmodule Factori.BuildTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users", id: "3"}],
@@ -106,6 +113,7 @@ defmodule Factori.BuildTest do
       ])
 
       defmodule UserEctoFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserEnumSchema}],
@@ -125,6 +133,7 @@ defmodule Factori.BuildTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule DoNotPersistFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [

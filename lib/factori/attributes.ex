@@ -1,7 +1,9 @@
 defmodule Factori.Attributes do
+  @moduledoc false
   require Logger
 
   defmodule CyclicNonNullableReferenceError do
+    @moduledoc false
     defexception [:source_column, :column]
 
     @impl true
@@ -32,8 +34,7 @@ defmodule Factori.Attributes do
     # O(1) membership test for column names instead of Enum.find per attr.
     column_names = MapSet.new(columns, & &1.name)
 
-    {db_attrs, struct_attrs} =
-      Enum.split_with(attrs, fn {attr, _} -> MapSet.member?(column_names, attr) end)
+    {db_attrs, struct_attrs} = Enum.split_with(attrs, fn {attr, _} -> MapSet.member?(column_names, attr) end)
 
     # Accumulate into a map for O(1) lookups (references read sibling values),
     # then rebuild the keyword list in column order at the end. Avoids the

@@ -8,6 +8,7 @@ defmodule Factori.Mapping.TransformTest do
       ])
 
       defmodule TransformModule do
+        @moduledoc false
         @behaviour Factori.Mapping
 
         def match(_), do: "my name"
@@ -15,6 +16,7 @@ defmodule Factori.Mapping.TransformTest do
       end
 
       defmodule TransformModuleFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users"}],
@@ -33,6 +35,7 @@ defmodule Factori.Mapping.TransformTest do
       ])
 
       defmodule TranformInlineFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users"}],

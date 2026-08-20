@@ -8,6 +8,7 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserNoVariantsSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key false
@@ -17,6 +18,7 @@ defmodule Factori.EctoVariantsTest do
       end
 
       defmodule UserNoVariantsFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -42,6 +44,7 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key {:id, :string, []}
@@ -51,6 +54,7 @@ defmodule Factori.EctoVariantsTest do
       end
 
       defmodule UserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserSchema}],
@@ -70,7 +74,7 @@ defmodule Factori.EctoVariantsTest do
       assert named.name === "foo"
     end
 
-    test "datetimes faker" do
+    test "datetimes generator" do
       Code.ensure_compiled!(UserDateTimeSchema)
 
       create_table!(:users_datetime, [
@@ -79,10 +83,11 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserDateTimeFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserDateTimeSchema}],
-          mappings: [Factori.Mapping.Faker]
+          mappings: [Factori.Mapping.Generator]
       end
 
       UserDateTimeFactory.bootstrap()
@@ -100,6 +105,7 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserListOverrideSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key {:id, :string, []}
@@ -109,6 +115,7 @@ defmodule Factori.EctoVariantsTest do
       end
 
       defmodule UserListOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserListOverrideSchema, name: "override"}],
@@ -135,6 +142,7 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserOverrideSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key {:id, :string, []}
@@ -144,6 +152,7 @@ defmodule Factori.EctoVariantsTest do
       end
 
       defmodule UserOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserOverrideSchema, name: "override"}],
@@ -170,6 +179,7 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserUnknownOverrideSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key {:id, :string, []}
@@ -179,6 +189,7 @@ defmodule Factori.EctoVariantsTest do
       end
 
       defmodule UserUnknownOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserUnknownOverrideSchema}],
@@ -210,6 +221,7 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserEctoFieldNotUsedInFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -240,6 +252,7 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserFieldNotUsedInSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key {:id, :binary_id, read_after_writes: true}
@@ -249,6 +262,7 @@ defmodule Factori.EctoVariantsTest do
       end
 
       defmodule UserFieldNotUsedInFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserFieldNotUsedInSchema}],
@@ -291,12 +305,13 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserCustomTypeFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserCustomTypeSchema}],
           mappings: [
             fn %{name: :amount} -> Money.new(100, :USD) end,
-            Factori.Mapping.Faker
+            Factori.Mapping.Generator
           ]
       end
 
@@ -314,6 +329,7 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserJSONMapSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key {:id, :string, []}
@@ -323,6 +339,7 @@ defmodule Factori.EctoVariantsTest do
       end
 
       defmodule UserJSONMapFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserJSONMapSchema}],
@@ -348,6 +365,7 @@ defmodule Factori.EctoVariantsTest do
       ])
 
       defmodule UserVirtualOverrideSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key {:id, :string, []}
@@ -358,6 +376,7 @@ defmodule Factori.EctoVariantsTest do
       end
 
       defmodule UserVirtualOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserVirtualOverrideSchema, admin?: true}],

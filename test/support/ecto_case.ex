@@ -1,5 +1,8 @@
 defmodule Factori.EctoCase do
+  @moduledoc false
   use ExUnit.CaseTemplate
+
+  alias Ecto.Adapters.SQL.Sandbox
 
   using do
     quote do
@@ -9,7 +12,8 @@ defmodule Factori.EctoCase do
       defp do_table!(operation, name, columns) do
         table = %Ecto.Migration.Table{name: name, prefix: :public}
 
-        Ecto.Adapters.Postgres.Connection.execute_ddl({operation, table, columns})
+        {operation, table, columns}
+        |> Ecto.Adapters.Postgres.Connection.execute_ddl()
         |> IO.iodata_to_binary()
         |> Factori.TestRepo.query!()
       end
@@ -21,7 +25,7 @@ defmodule Factori.EctoCase do
   end
 
   setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Factori.TestRepo)
-    Ecto.Adapters.SQL.Sandbox.mode(Factori.TestRepo, :manual)
+    :ok = Sandbox.checkout(Factori.TestRepo)
+    Sandbox.mode(Factori.TestRepo, :manual)
   end
 end

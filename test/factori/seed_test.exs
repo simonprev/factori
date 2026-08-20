@@ -1,10 +1,12 @@
 defmodule Factori.SeedTest do
-  require Logger
   use Factori.EctoCase, async: true
+
+  require Logger
 
   describe "seed" do
     test "unknown" do
       defmodule UnknownFactory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo
       end
 
@@ -15,9 +17,11 @@ defmodule Factori.SeedTest do
 
     test "invalid schema" do
       defmodule InvalidModule do
+        @moduledoc false
       end
 
       defmodule InvalidFactory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo, variants: [{:invalid_variant_name, InvalidModule}]
       end
 
@@ -30,6 +34,7 @@ defmodule Factori.SeedTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users"}],
@@ -49,6 +54,7 @@ defmodule Factori.SeedTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule CountUserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users"}],
@@ -68,6 +74,7 @@ defmodule Factori.SeedTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule LargeCountUserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -92,6 +99,7 @@ defmodule Factori.SeedTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule VeryLargeCountUserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -101,8 +109,7 @@ defmodule Factori.SeedTest do
 
       VeryLargeCountUserFactory.bootstrap()
 
-      {time_microseconds, :ok} =
-        :timer.tc(fn -> VeryLargeCountUserFactory.seed("users", 500_000) end)
+      {time_microseconds, :ok} = :timer.tc(fn -> VeryLargeCountUserFactory.seed("users", 500_000) end)
 
       Logger.info("Inserting 500 000 simple rows took #{time_microseconds / 1_000_000} seconds")
 

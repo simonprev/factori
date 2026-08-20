@@ -4,7 +4,7 @@ Test data without boilerplate. Always in-sync with your database schema.
 
 ```elixir
 defmodule MyAppTest.Factory do
-  use Factori, repo: MyApp.Repo, mappings: [Factori.Mapping.Faker, Factori.Mapping.Enum]
+  use Factori, repo: MyApp.Repo, mappings: [Factori.Mapping.Generator, Factori.Mapping.Enum]
 end
 
 user = MyAppTest.Factory.insert("users")
@@ -32,7 +32,7 @@ Define your `Factory` module with the repo (typically in `test/support`).
 defmodule MyAppTest.Factory do
   use Factori,
     repo: MyApp.Repo,
-    mappings: [Factori.Mapping.Enum, Factori.Mapping.Embed, Factori.Mapping.Faker]
+    mappings: [Factori.Mapping.Enum, Factori.Mapping.Embed, Factori.Mapping.Generator]
 end
 ```
 
@@ -87,7 +87,7 @@ end
 
 ### Mappings
 
-Mappings are modules or functions used to map data to columns. `factori` ships with a Faker integration that insert valid data from the type of the column. You can add your own mapper before Faker to override the data mapping:
+Mappings are modules or functions used to map data to columns. `factori` ships with a built-in generator that inserts valid data from the type of the column. You can add your own mapper before the generator to override the data mapping:
 
 ```elixir
 defmodule MyAppTest.MappingCustom do
@@ -98,7 +98,7 @@ end
 defmodule MyAppTest.Factory do
   use Factori,
     repo: MyApp.Repo,
-    mappings: [fn %{name: :name} -> "foo" end, MappingCustom, Factori.Mapping.Faker]
+    mappings: [fn %{name: :name} -> "foo" end, MappingCustom, Factori.Mapping.Generator]
 end
 
 test "mappings" do
@@ -108,7 +108,7 @@ end
 ```
 
 Mappings also supports transforming data. This can be useful when we want random data but with a bit more control before inserting into the database:
-In the example, the custom module does not implement the mapping, so the Faker one is taken. Then, the `transform/2` is called to alter the data.
+In the example, the custom module does not implement the mapping, so the built-in generator is taken. Then, the `transform/2` is called to alter the data.
 
 ```elixir
 defmodule MyAppTest.Transform do
@@ -119,7 +119,7 @@ end
 defmodule MyAppTest.Factory do
   use Factori,
     repo: MyApp.Repo,
-    mappings: [Transform, Factori.Mapping.Faker]
+    mappings: [Transform, Factori.Mapping.Generator]
 end
 
 test "transforms" do
@@ -138,7 +138,7 @@ Instead of using string to reference the "raw" table names, you can use named va
 defmodule MyAppTest.Factory do
   use Factori,
     repo: MyApp.Repo,
-    mappings: [Factori.Mapping.Faker],
+    mappings: [Factori.Mapping.Generator],
     variants: [{:user, "users"}]
 end
 
@@ -152,7 +152,7 @@ Variants can also include overrides:
 defmodule MyAppTest.Factory do
   use Factori,
     repo: MyApp.Repo,
-    mappings: [Factori.Mapping.Faker],
+    mappings: [Factori.Mapping.Generator],
     variants: [{:user, "users", name: "Test"}]
 end
 
@@ -174,7 +174,7 @@ If there are no matches, the default behaviour is the nullability of the column.
 defmodule MyAppTest.Factory do
   use Factori,
     repo: MyApp.Repo,
-    mappings: [Factori.Mapping.Faker],
+    mappings: [Factori.Mapping.Generator],
     null?: [fn %{name: :first_name} -> false end]
 end
 ```
@@ -189,7 +189,7 @@ In the example, when inserting a post with a owner and an author, the same user 
 defmodule MyAppTest.Factory do
   use Factori,
     repo: MyApp.Repo,
-    mappings: [Factori.Mapping.Faker],
+    mappings: [Factori.Mapping.Generator],
     prevent_reuse_table_references: [
       {"posts", "users"}
     ]
@@ -223,7 +223,7 @@ end
 defmodule MyAppTest.Factory do
   use Factori,
     repo: MyApp.Repo,
-    mappings: [Factori.Mapping.Faker],
+    mappings: [Factori.Mapping.Generator],
     variants: [{:user, MyApp.User}, {:admin, MyApp.User, admin: true}]
 end
 

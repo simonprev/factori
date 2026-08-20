@@ -17,9 +17,10 @@ defmodule Factori.EctoEmbedsTest do
       ])
 
       defmodule UserTableEmbedsMappingFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Faker]
+          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Generator]
       end
 
       UserTableEmbedsMappingFactory.bootstrap()
@@ -50,9 +51,10 @@ defmodule Factori.EctoEmbedsTest do
       ])
 
       defmodule UserTableEmbedsMissingMappingFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Faker]
+          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Generator]
       end
 
       UserTableEmbedsMissingMappingFactory.bootstrap()
@@ -69,7 +71,7 @@ defmodule Factori.EctoEmbedsTest do
     end
   end
 
-  describe "embeds faker mapping" do
+  describe "embeds generator mapping" do
     test "nested" do
       Code.ensure_compiled!(UserAddressEmbedSchema)
       Code.ensure_compiled!(UserEmbedSchema)
@@ -85,9 +87,10 @@ defmodule Factori.EctoEmbedsTest do
       ])
 
       defmodule UserEmbedsMappingFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
-          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Faker]
+          mappings: [Factori.Mapping.Embed, Factori.Mapping.Enum, Factori.Mapping.Generator]
       end
 
       UserEmbedsMappingFactory.bootstrap()
@@ -107,6 +110,7 @@ defmodule Factori.EctoEmbedsTest do
       ])
 
       defmodule UserEmbedsOneSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key false
@@ -118,6 +122,7 @@ defmodule Factori.EctoEmbedsTest do
       end
 
       defmodule UserEmbedsOneFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -159,6 +164,7 @@ defmodule Factori.EctoEmbedsTest do
       ])
 
       defmodule UserReferenceEmbedsOneSchema do
+        @moduledoc false
         use Ecto.Schema
 
         schema "reference_users" do
@@ -169,6 +175,7 @@ defmodule Factori.EctoEmbedsTest do
       end
 
       defmodule PostReferenceEmbedsOneSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key false
@@ -178,6 +185,7 @@ defmodule Factori.EctoEmbedsTest do
       end
 
       defmodule UserReferenceEmbedsOneFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -206,6 +214,7 @@ defmodule Factori.EctoEmbedsTest do
       ])
 
       defmodule UserListEmbedsOneSchema do
+        @moduledoc false
         use Ecto.Schema
 
         @primary_key false
@@ -217,6 +226,7 @@ defmodule Factori.EctoEmbedsTest do
       end
 
       defmodule UserListEmbedsOneFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [

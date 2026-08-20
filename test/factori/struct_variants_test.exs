@@ -6,10 +6,12 @@ defmodule Factori.StructVariantsTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserStruct do
+        @moduledoc false
         defstruct id: nil
       end
 
       defmodule UserFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users", UserStruct}],
@@ -29,10 +31,12 @@ defmodule Factori.StructVariantsTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserOverrideStruct do
+        @moduledoc false
         defstruct id: nil
       end
 
       defmodule UserOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users", UserOverrideStruct, id: "3"}],
@@ -52,10 +56,12 @@ defmodule Factori.StructVariantsTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule ListUserOverrideStruct do
+        @moduledoc false
         defstruct id: nil
       end
 
       defmodule ListUserOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, "users", ListUserOverrideStruct, id: "3"}],

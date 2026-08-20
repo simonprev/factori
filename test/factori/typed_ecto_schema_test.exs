@@ -8,6 +8,7 @@ defmodule Factori.TypedEctoSchemaTest do
     ])
 
     defmodule UserSchema do
+      @moduledoc false
       use TypedEctoSchema
 
       @primary_key {:id, :string, []}
@@ -17,6 +18,7 @@ defmodule Factori.TypedEctoSchemaTest do
     end
 
     defmodule TypedUserFactory do
+      @moduledoc false
       use Factori,
         repo: Factori.TestRepo,
         variants: [{:user, UserSchema}],

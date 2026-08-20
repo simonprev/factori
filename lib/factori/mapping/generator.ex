@@ -1,5 +1,8 @@
-defmodule Factori.Mapping.Faker do
+defmodule Factori.Mapping.Generator do
+  @moduledoc false
   @behaviour Factori.Mapping
+
+  alias Factori.Generator
 
   @ranges %{
     smallint: -32_768..32_767,
@@ -8,8 +11,6 @@ defmodule Factori.Mapping.Faker do
     bigserial: 1..9_223_372_036_854_775_807
   }
   @timestamps ~w(inserted_at updated_at)a
-
-  alias Faker.Lorem
 
   def match(%{type: "uuid"}), do: Ecto.UUID.generate()
   def match(%{type: "array"}), do: []
@@ -23,33 +24,29 @@ defmodule Factori.Mapping.Faker do
   def match(%{type: "numeric"}), do: Enum.random(@ranges.bigserial)
   def match(%{type: "bool"}), do: Enum.random([true, false])
 
-  def match(%{type: "text"}), do: Lorem.paragraph(5)
+  def match(%{type: "text"}), do: Generator.paragraph(5)
   def match(%{type: "time", ecto_type: :time}), do: Time.truncate(time(), :second)
   def match(%{type: "time"}), do: time()
   def match(%{type: "date"}), do: date()
   def match(%{type: "char", options: options}), do: varchar(options)
   def match(%{type: "bytea", options: options}), do: varchar(options)
-  def match(%{type: "varchar", name: :email}), do: Faker.Internet.email()
-  def match(%{type: "varchar", name: :phone_number}), do: Faker.Phone.EnUs.phone()
+  def match(%{type: "varchar", name: :email}), do: Generator.email()
+  def match(%{type: "varchar", name: :phone_number}), do: Generator.phone()
   def match(%{type: "_varchar"}), do: []
   def match(%{type: "tsvector"}), do: []
 
-  def match(%{type: "timestamp" <> _, name: name, ecto_type: :utc_datetime})
-      when name in @timestamps,
-      do: DateTime.truncate(DateTime.utc_now(), :second)
+  def match(%{type: "timestamp" <> _, name: name, ecto_type: :utc_datetime}) when name in @timestamps,
+    do: DateTime.truncate(DateTime.utc_now(), :second)
 
-  def match(%{type: "timestamp" <> _, name: name, ecto_type: :naive_datetime})
-      when name in @timestamps,
-      do: DateTime.to_naive(DateTime.truncate(DateTime.utc_now(), :second))
+  def match(%{type: "timestamp" <> _, name: name, ecto_type: :naive_datetime}) when name in @timestamps,
+    do: DateTime.to_naive(DateTime.truncate(DateTime.utc_now(), :second))
 
-  def match(%{type: "timestamp" <> _, ecto_type: :utc_datetime}),
-    do: DateTime.truncate(timestamp(), :second)
+  def match(%{type: "timestamp" <> _, ecto_type: :utc_datetime}), do: DateTime.truncate(timestamp(), :second)
 
   def match(%{type: "timestamp" <> _, ecto_type: :naive_datetime}),
     do: DateTime.to_naive(DateTime.truncate(timestamp(), :second))
 
-  def match(%{type: "timestamp" <> _, name: name}) when name in @timestamps,
-    do: DateTime.utc_now()
+  def match(%{type: "timestamp" <> _, name: name}) when name in @timestamps, do: DateTime.utc_now()
 
   def match(%{type: "timestamp" <> _}), do: timestamp()
 
@@ -68,7 +65,7 @@ defmodule Factori.Mapping.Faker do
 
   defp readable_varchar(options) do
     size = string_max_size(options[:size])
-    String.slice(Lorem.sentence(size), 1..size)
+    String.slice(Generator.sentence(size), 1..size)
   end
 
   defp varchar(options) do
@@ -98,9 +95,6 @@ defmodule Factori.Mapping.Faker do
   end
 
   defp timestamp do
-    Faker.DateTime.between(
-      Faker.DateTime.backward(10),
-      Faker.DateTime.forward(10)
-    )
+    Generator.datetime()
   end
 end

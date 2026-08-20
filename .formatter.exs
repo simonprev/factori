@@ -1,3 +1,4 @@
 [
-  inputs: ["mix.exs", "{config,lib,test}/**/*.{ex,exs}"],
+  plugins: [Styler],
+  inputs: ["mix.exs", "{config,lib,test}/**/*.{ex,exs}"]
 ]

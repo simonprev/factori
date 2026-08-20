@@ -4,6 +4,7 @@ defmodule Factori.TableNameTest do
   describe "table name" do
     test "unknown" do
       defmodule UnknownFactory do
+        @moduledoc false
         use Factori, repo: Factori.TestRepo
       end
 
@@ -18,6 +19,7 @@ defmodule Factori.TableNameTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -35,6 +37,7 @@ defmodule Factori.TableNameTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule ListUserOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -52,6 +55,7 @@ defmodule Factori.TableNameTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserSimpleMatchFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -69,6 +73,7 @@ defmodule Factori.TableNameTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule UserPersistOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [
@@ -87,6 +92,7 @@ defmodule Factori.TableNameTest do
       create_table!(:users, [{:add, :id, :string, [size: 1, null: false]}])
 
       defmodule ListUserPersistOverrideFactory do
+        @moduledoc false
         use Factori,
           repo: Factori.TestRepo,
           mappings: [

@@ -1,4 +1,5 @@
 defmodule Factori.Ecto do
+  @moduledoc false
   def to_ecto_type("uuid"), do: Ecto.UUID
   def to_ecto_type(type), do: type
 
@@ -9,7 +10,7 @@ defmodule Factori.Ecto do
 
     value
     |> Map.from_struct()
-    |> Enum.map(fn {struct_key, struct_value} ->
+    |> Map.new(fn {struct_key, struct_value} ->
       key_column = Enum.find(key_columns, &(&1.name === struct_key))
 
       key_column =
@@ -19,22 +20,18 @@ defmodule Factori.Ecto do
 
       {struct_key, dump_value(struct_value, key_column)}
     end)
-    |> Map.new()
   end
 
   def dump_value(value, column) when is_struct(value) and column.type in ~w(json jsonb) do
     Map.from_struct(value)
   end
 
-  def dump_value(value, column) when is_list(value),
-    do: Enum.map(value, &dump_value(&1, column))
+  def dump_value(value, column) when is_list(value), do: Enum.map(value, &dump_value(&1, column))
 
-  def dump_value(value, %{ecto_schema: nil, enum: enum}) when is_struct(enum),
+  def dump_value(value, %{ecto_schema: nil, enum: enum}) when is_struct(enum), do: to_string(value)
+
+  def dump_value(value, %{enum: %{name: enum_name}, type: column_type}) when enum_name === column_type,
     do: to_string(value)
-
-  def dump_value(value, %{enum: %{name: enum_name}, type: column_type})
-      when enum_name === column_type,
-      do: to_string(value)
 
   def dump_value(value, %{enum: enum}) when is_struct(enum, Factori.Bootstrap.EnumDefinition) do
     Keyword.get(enum.mappings, value)
@@ -43,8 +40,7 @@ defmodule Factori.Ecto do
   def dump_value(value, column) when column.type === "varchar", do: to_string(value)
   def dump_value(value, column) when column.type === "_varchar", do: to_string(value)
 
-  def dump_value(value, %{ecto_type: ecto_type_module})
-      when is_atom(ecto_type_module) do
+  def dump_value(value, %{ecto_type: ecto_type_module}) when is_atom(ecto_type_module) do
     if dumpable_type?(ecto_type_module) do
       case Ecto.Type.dump(ecto_type_module, value) do
         {:ok, value} -> value
@@ -82,8 +78,7 @@ defmodule Factori.Ecto do
 
   def load_value(nil, _), do: nil
 
-  def load_value(value, column) when is_list(value),
-    do: Enum.map(value, &load_value(&1, column))
+  def load_value(value, column) when is_list(value), do: Enum.map(value, &load_value(&1, column))
 
   def load_value(value, %{enum: enum}) when is_struct(enum) do
     case List.keyfind(enum.mappings, value, 1) do
@@ -118,14 +113,12 @@ defmodule Factori.Ecto do
   end
 
   def load_value(value, %{ecto_type: ecto_type})
-      when ecto_type in ~w(utc_datetime utc_datetime_usec)a and
-             is_struct(value, NaiveDateTime) do
+      when ecto_type in ~w(utc_datetime utc_datetime_usec)a and is_struct(value, NaiveDateTime) do
     DateTime.from_naive!(value, "Etc/UTC")
   end
 
   def load_value(value, %{ecto_type: ecto_type})
-      when ecto_type in ~w(utc_datetime utc_datetime_usec)a and
-             is_binary(value) do
+      when ecto_type in ~w(utc_datetime utc_datetime_usec)a and is_binary(value) do
     case DateTime.from_iso8601(value) do
       {:ok, datetime, _} -> datetime
       _ -> value
@@ -133,17 +126,14 @@ defmodule Factori.Ecto do
   end
 
   def load_value(value, %{ecto_type: ecto_type})
-      when ecto_type in ~w(naive_datetime naive_datetime_usec)a and
-             is_binary(value) do
+      when ecto_type in ~w(naive_datetime naive_datetime_usec)a and is_binary(value) do
     case NaiveDateTime.from_iso8601(value) do
       {:ok, datetime} -> datetime
       _ -> value
     end
   end
 
-  def load_value(value, %{ecto_type: ecto_type})
-      when ecto_type in ~w(date)a and
-             is_binary(value) do
+  def load_value(value, %{ecto_type: ecto_type}) when ecto_type in ~w(date)a and is_binary(value) do
     case Date.from_iso8601(value) do
       {:ok, date} -> date
       _ -> value

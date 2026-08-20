@@ -1,5 +1,7 @@
 defmodule Factori.Bootstrap do
+  @moduledoc false
   defmodule EnumDefinition do
+    @moduledoc false
     defstruct name: nil, mappings: []
 
     @type t :: %__MODULE__{
@@ -9,6 +11,7 @@ defmodule Factori.Bootstrap do
   end
 
   defmodule EmbedDefinition do
+    @moduledoc false
     defstruct name: nil, ecto_schema: nil, cardinality: nil
 
     @type t :: %__MODULE__{
@@ -19,6 +22,7 @@ defmodule Factori.Bootstrap do
   end
 
   defmodule ReferenceDefinition do
+    @moduledoc false
     defstruct target: nil,
               target_column: nil,
               source: nil,
@@ -33,6 +37,7 @@ defmodule Factori.Bootstrap do
   end
 
   defmodule ColumnDefinition do
+    @moduledoc false
     defstruct table_name: nil,
               name: nil,
               type: nil,
@@ -58,7 +63,7 @@ defmodule Factori.Bootstrap do
   end
 
   @spec bootstrap(Factori.Config.t()) :: any()
-  def bootstrap(config = %Factori.Config{}) do
+  def bootstrap(%Factori.Config{} = config) do
     config.storage.init(config.storage_name)
 
     config.adapter.warn_on_setup(config.repo)

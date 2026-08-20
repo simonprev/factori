@@ -1,6 +1,8 @@
 defmodule Factori.Adapter.Postgresql do
-  require Logger
+  @moduledoc false
   alias Factori.Bootstrap
+
+  require Logger
 
   @columns """
   SELECT
@@ -74,8 +76,7 @@ defmodule Factori.Adapter.Postgresql do
         columns
         |> Enum.map(&generate_column_definition(&1, references, db_enums, ecto_schema))
         |> Enum.group_by(& &1.name)
-        |> Enum.map(fn {name, [definition]} -> {name, definition} end)
-        |> Enum.into(%{})
+        |> Map.new(fn {name, [definition]} -> {name, definition} end)
         |> Map.values()
 
       Map.put(acc, table_name, columns)
