@@ -31,7 +31,7 @@ defmodule Factori.Mixfile do
       {:jason, "~> 1.0", only: [:dev, :test]},
       {:postgrex, "~> 0.14", only: :test},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:typed_ecto_schema, "~> 0.4.1", only: :test, runtime: false},
+      {:typed_ecto_schema, "~> 0.5", only: :test, runtime: false},
       {:credo, "~> 1.1", only: [:dev, :test], override: true},
       {:credo_envvar, "~> 0.1", only: [:dev, :test], runtime: false},
       {:credo_naming, "~> 2.0", only: [:dev, :test], runtime: false},
