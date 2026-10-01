@@ -4,7 +4,7 @@ defmodule Factori.Mixfile do
   def project do
     [
       app: :factori,
-      version: "0.16.1",
+      version: "0.17.0",
       elixir: ">= 1.18.0",
       description: "Test factories generated from database schema",
       elixirc_paths: elixirc_paths(Mix.env()),
