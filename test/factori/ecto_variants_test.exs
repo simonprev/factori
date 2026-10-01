@@ -1,8 +1,6 @@
 defmodule Factori.EctoVariantsTest do
   use Factori.EctoCase, async: true
 
-  alias Factori.Mapping.Generator
-
   describe "no variants" do
     test "schema" do
       create_table!(:users, [
@@ -89,7 +87,7 @@ defmodule Factori.EctoVariantsTest do
         use Factori,
           repo: Factori.TestRepo,
           variants: [{:user, UserDateTimeSchema}],
-          mappings: [Generator]
+          mappings: [Factori.Mapping.Generator]
       end
 
       UserDateTimeFactory.bootstrap()
@@ -313,7 +311,7 @@ defmodule Factori.EctoVariantsTest do
           variants: [{:user, UserCustomTypeSchema}],
           mappings: [
             fn %{name: :amount} -> Money.new(100, :USD) end,
-            Generator
+            Factori.Mapping.Generator
           ]
       end
 

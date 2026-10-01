@@ -2,7 +2,6 @@ defmodule Factori.ReferencesTest do
   use Factori.EctoCase, async: true
 
   alias Ecto.Migration.Reference
-  alias Factori.Mapping.Generator
   alias Factori.TestRepo, as: Repo
 
   describe "references" do
@@ -23,7 +22,7 @@ defmodule Factori.ReferencesTest do
         @moduledoc false
         use Factori,
           repo: Repo,
-          mappings: [Generator]
+          mappings: [Factori.Mapping.Generator]
       end
 
       ReferenceFactory.bootstrap()
@@ -50,7 +49,7 @@ defmodule Factori.ReferencesTest do
         @moduledoc false
         use Factori,
           repo: Repo,
-          mappings: [Generator]
+          mappings: [Factori.Mapping.Generator]
       end
 
       ListReferenceFactory.bootstrap()
@@ -98,7 +97,7 @@ defmodule Factori.ReferencesTest do
         @moduledoc false
         use Factori,
           repo: Repo,
-          mappings: [Generator]
+          mappings: [Factori.Mapping.Generator]
       end
 
       ReuseFactory.bootstrap()
@@ -144,7 +143,7 @@ defmodule Factori.ReferencesTest do
           prevent_reuse_table_references: [
             {"noreuse_reference_posts", "noreuse_reference_users"}
           ],
-          mappings: [Generator]
+          mappings: [Factori.Mapping.Generator]
       end
 
       NoReuseFactory.bootstrap()
@@ -168,7 +167,7 @@ defmodule Factori.ReferencesTest do
         @moduledoc false
         use Factori,
           repo: Repo,
-          mappings: [Generator]
+          mappings: [Factori.Mapping.Generator]
       end
 
       NullableOverrideReferenceFactory.bootstrap()
@@ -201,7 +200,7 @@ defmodule Factori.ReferencesTest do
         @moduledoc false
         use Factori,
           repo: Repo,
-          mappings: [Generator]
+          mappings: [Factori.Mapping.Generator]
       end
 
       DoubleFactory.bootstrap()
@@ -235,7 +234,7 @@ defmodule Factori.ReferencesTest do
         @moduledoc false
         use Factori,
           repo: Repo,
-          mappings: [Generator],
+          mappings: [Factori.Mapping.Generator],
           null?: [fn _ -> false end]
       end
 
